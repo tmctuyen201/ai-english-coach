@@ -1,0 +1,862 @@
+# AI English Coach — System Architecture
+
+> **Version:** 1.0.0
+> **Last Updated:** 2026-05-30
+
+---
+
+## 1. Architecture Overview
+
+### 1.1 Design Principles
+
+1. **Microservices-ready** — Start as modular monolith, split when needed
+2. **Event-driven** — Async processing for non-blocking operations
+3. **Real-time first** — WebSocket for voice, SSE for text updates
+4. **Cost-optimized** — Cache aggressively, batch API calls, use cheaper models where possible
+5. **Vietnam-optimized** — Low latency for VN users, local payment gateways, Vietnamese language support
+
+### 1.2 System Context Diagram
+
+```
+                                    ┌─────────────────────┐
+                                    │    Zalo OA API       │
+                                    │  (Notifications)     │
+                                    └──────────┬──────────┘
+                                               │
+┌──────────────┐                              │
+│  Students    │                              │
+│  (Mobile/Web)│──────┐                       │
+└──────────────┘      │                       │
+                      │                       │
+┌──────────────┐      │    ┌──────────────────────────────────────────┐
+│  Parents     │──────┼───▶│           AI ENGLISH COACH                │
+│  (Web)       │      │    │                                          │
+└──────────────┘      │    │  ┌─────────────────────────────────────┐ │
+                      │    │  │         Core Platform                │ │
+┌──────────────┐      │    │  │  ├── Conversation Engine             │ │
+│  Teachers    │──────┘    │  │  ├── Learning Management             │ │
+│  (Web)       │           │  │  ├── Analytics & Reporting           │ │
+└──────────────┘           │  │  └── User Management                 │ │
+                           │  └─────────────────────────────────────┘ │
+                           │                                          │
+                           └──────────────────────────────────────────┘
+                                           │
+                    ┌──────────────────────┼──────────────────────┐
+                    │                      │                      │
+                    ▼                      ▼                      ▼
+           ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+           │  OpenAI API   │    │  Deepgram     │    │  FPT.AI       │
+           │  (LLM, TTS,   │    │  (Streaming   │    │  (Vietnamese  │
+           │   Embeddings) │    │   ASR)        │    │   TTS)        │
+           └──────────────┘    └──────────────┘    └──────────────┘
+```
+
+---
+
+## 2. Service Architecture
+
+### 2.1 Service Decomposition
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                      API GATEWAY (Nginx/Kong)                        │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  Routes:                                                     │   │
+│  │  /api/v1/conversations/*  → conversation-service             │   │
+│  │  /api/v1/users/*          → user-service                     │   │
+│  │  /api/v1/learning/*       → learning-service                 │   │
+│  │  /api/v1/analytics/*      → analytics-service                │   │
+│  │  /api/v1/auth/*           → auth-service                     │   │
+│  │  /ws/v1/*                 → conversation-service (WebSocket) │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+         ┌───────────────────┼───────────────────┬───────────────┐
+         ▼                   ▼                   ▼               ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────┐ ┌─────────────┐
+│  CONVERSATION    │ │  USER            │ │  LEARNING    │ │  ANALYTICS   │
+│  SERVICE          │ │  SERVICE          │ │  SERVICE      │ │  SERVICE      │
+│                   │ │                   │ │               │ │               │
+│  Port: 8001       │ │  Port: 8002       │ │  Port: 8003   │ │  Port: 8004   │
+│                   │ │                   │ │               │ │               │
+│  Responsibilities:│ │  Responsibilities:│ │Responsibilities│ │Responsibilities│
+│  ├── Voice I/O    │ │  ├── Auth (OTP)   │ │  ├── Topics    │ │  ├── Progress  │
+│  ├── ASR pipeline │ │  ├── User CRUD    │ │  ├── Quizzes   │ │  ├── Scores    │
+│  ├── LLM agent    │ │  ├── Profiles     │ │  ├── Vocab     │ │  ├── Reports   │
+│  ├── TTS pipeline │ │  ├── Subscriptions│ │  ├── Study Plan│ │  ├── Predict   │
+│  ├── Feedback gen │ │  └── Parent link  │ │  └── Curriculum│ │  └── Insights  │
+│  └── Session mgmt │ │                   │ │               │ │               │
+└────────┬─────────┘ └────────┬─────────┘ └──────┬───────┘ └──────┬───────┘
+         │                    │                   │               │
+         ▼                    ▼                   ▼               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                         DATA LAYER                                   │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
+│  │PostgreSQL │  │  Redis    │  │  Qdrant   │  │  MinIO    │          │
+│  │  :5432    │  │  :6379    │  │  :6333    │  │  :9000    │          │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘          │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 2.2 Monolith-First Strategy
+
+**Phase 1 (MVP):** Single FastAPI application with clear module boundaries
+
+```
+src/
+├── main.py                    # FastAPI app entry point
+├── config/                    # Configuration
+│   ├── settings.py
+│   └── dependencies.py
+├── modules/
+│   ├── auth/                  # Authentication module
+│   │   ├── router.py
+│   │   ├── service.py
+│   │   ├── models.py
+│   │   └── schemas.py
+│   ├── conversation/          # Conversation module
+│   │   ├── router.py
+│   │   ├── service.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   ├── asr/               # Speech recognition
+│   │   │   ├── whisper.py
+│   │   │   └── deepgram.py
+│   │   ├── llm/               # LLM integration
+│   │   │   ├── agent.py
+│   │   │   ├── prompts.py
+│   │   │   └── grammar.py
+│   │   ├── tts/               # Text-to-speech
+│   │   │   ├── openai_tts.py
+│   │   │   └── fpt_tts.py
+│   │   ├── pronunciation/     # Pronunciation scoring
+│   │   │   ├── scorer.py
+│   │   │   └── phoneme.py
+│   │   └── feedback/          # Feedback generation
+│   │       ├── generator.py
+│   │       └── templates.py
+│   ├── learning/              # Learning module
+│   │   ├── router.py
+│   │   ├── service.py
+│   │   ├── models.py
+│   │   ├── topics.py
+│   │   ├── vocabulary.py
+│   │   └── spaced_repetition.py
+│   ├── user/                  # User module
+│   │   ├── router.py
+│   │   ├── service.py
+│   │   ├── models.py
+│   │   └── parent.py
+│   └── analytics/             # Analytics module
+│       ├── router.py
+│       ├── service.py
+│       └── reports.py
+├── shared/                    # Shared utilities
+│   ├── database.py
+│   ├── redis.py
+│   ├── security.py
+│   └── exceptions.py
+└── websocket/                 # WebSocket handlers
+    ├── manager.py
+    └── conversation_ws.py
+```
+
+**Phase 2 (Scale):** Extract services when load demands
+
+```
+┌─────────────────────────────────────────────┐
+│  Service Extraction Triggers:                │
+│                                              │
+│  conversation-service: > 500 concurrent      │
+│  user-service: > 10K requests/sec            │
+│  learning-service: > 1K requests/sec         │
+│  analytics-service: batch processing needs   │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## 3. Conversation Engine Architecture
+
+### 3.1 Real-Time Voice Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    VOICE CONVERSATION PIPELINE                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Student's Device                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  Microphone → WebRTC → Audio Chunks (100ms)                  │   │
+│  └──────────────────────────────┬───────────────────────────────┘   │
+│                                  │ WebSocket (binary frames)         │
+│                                  ▼                                   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  WEBSOCKET HANDLER                                            │   │
+│  │  ├── Receive audio chunks                                     │   │
+│  │  ├── Buffer until VAD (Voice Activity Detection) endpoint     │   │
+│  │  └── Forward to ASR pipeline                                  │   │
+│  └──────────────────────────────┬───────────────────────────────┘   │
+│                                  │                                   │
+│                                  ▼                                   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  ASR PIPELINE (Parallel)                                      │   │
+│  │                                                                │   │
+│  │  Option A: OpenAI Whisper API (batch)                         │   │
+│  │  ├── Send complete utterance                                  │   │
+│  │  ├── Receive transcript                                       │   │
+│  │  └── Latency: ~1-2s                                           │   │
+│  │                                                                │   │
+│  │  Option B: Deepgram Nova-2 (streaming)                        │   │
+│  │  ├── Stream audio chunks                                      │   │
+│  │  ├── Receive partial transcripts                              │   │
+│  │  └── Latency: ~200-500ms                                      │   │
+│  │                                                                │   │
+│  │  Selection Logic:                                              │   │
+│  │  ├── Premium users → Deepgram (streaming)                     │   │
+│  │  └── Free users → Whisper (batch, cheaper)                    │   │
+│  └──────────────────────────────┬───────────────────────────────┘   │
+│                                  │                                   │
+│                                  ▼                                   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  ANALYSIS PIPELINE (Parallel)                                 │   │
+│  │                                                                │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │   │
+│  │  │  Grammar     │  │  LLM Agent   │  │  Pronunciation│          │   │
+│  │  │  Checker     │  │  (Response)   │  │  Scorer       │          │   │
+│  │  │             │  │             │  │             │          │   │
+│  │  │  Input: text│  │  Input: text│  │  Input: audio│          │   │
+│  │  │  + context  │  │  + history  │  │  + text      │          │   │
+│  │  │             │  │             │  │             │          │   │
+│  │  │  Output:    │  │  Output:    │  │  Output:    │          │   │
+│  │  │  corrections│  │  response   │  │  scores     │          │   │
+│  │  │  + score    │  │  text       │  │  + details  │          │   │
+│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘          │   │
+│  │         │                │                │                  │   │
+│  │         └────────────────┼────────────────┘                  │   │
+│  │                          ▼                                    │   │
+│  │                 ┌─────────────┐                               │   │
+│  │                 │  MERGER      │                               │   │
+│  │                 │  (combine    │                               │   │
+│  │                 │   results)   │                               │   │
+│  │                 └──────┬──────┘                               │   │
+│  └────────────────────────┼──────────────────────────────────────┘   │
+│                            │                                         │
+│                            ▼                                         │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  TTS PIPELINE                                                 │   │
+│  │                                                                │   │
+│  │  Input: AI response text                                      │   │
+│  │                                                                │   │
+│  │  ┌─────────────┐  ┌─────────────┐                            │   │
+│  │  │  OpenAI TTS  │  │  FPT.AI TTS  │                            │   │
+│  │  │  (English)   │  │  (Vietnamese)│                            │   │
+│  │  └──────┬──────┘  └──────┬──────┘                            │   │
+│  │         │                │                                    │   │
+│  │         └────────┬───────┘                                    │   │
+│  │                  ▼                                             │   │
+│  │         ┌─────────────┐                                       │   │
+│  │         │  Audio Cache  │ (Redis, TTL: 1 hour)                │   │
+│  │         └──────┬──────┘                                       │   │
+│  └────────────────┼──────────────────────────────────────────────┘   │
+│                    │                                                  │
+│                    ▼                                                  │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  RESPONSE ASSEMBLER                                           │   │
+│  │                                                                │   │
+│  │  ┌─────────────────────────────────────────────────────────┐ │   │
+│  │  │  WebSocket Message to Client:                            │ │   │
+│  │  │  {                                                       │ │   │
+│  │  │    "type": "ai_response",                                │ │   │
+│  │  │    "text": "Great choice! Would you like...",            │ │   │
+│  │  │    "audio_url": "https://...",                           │ │   │
+│  │  │    "feedback": {                                         │ │   │
+│  │  │      "grammar": {...},                                   │ │   │
+│  │  │      "pronunciation": {...}                              │ │   │
+│  │  │    }                                                     │ │   │
+│  │  │  }                                                       │ │   │
+│  │  └─────────────────────────────────────────────────────────┘ │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.2 LLM Agent Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    LLM AGENT SYSTEM                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  SYSTEM PROMPT                                                │   │
+│  │  ├── Role: English conversation partner for Vietnamese        │   │
+│  │  │   students                                                 │   │
+│  │  ├── Personality: Friendly, encouraging, patient              │   │
+│  │  ├── Rules:                                                   │   │
+│  │  │   ├── Stay in character (waiter, friend, teacher, etc.)   │   │
+│  │  │   ├── Don't give answers, guide with questions             │   │
+│  │  │   ├── Correct grammar naturally in flow                    │   │
+│  │  │   ├── Use vocabulary appropriate to student's level        │   │
+│  │  │   ├── Encourage Vietnamese if student is stuck             │   │
+│  │  │   └── Keep responses 1-3 sentences                         │   │
+│  │  └── Context: Student level, topic, learning objectives       │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  CONVERSATION CONTEXT                                         │   │
+│  │                                                                │   │
+│  │  ┌─────────────────────────────────────────────────────────┐ │   │
+│  │  │  Conversation Memory (sliding window)                    │ │   │
+│  │  │  ├── Last 10 turns (full text)                           │ │   │
+│  │  │  ├── Topic state (current subtopic, progress)            │ │   │
+│  │  │  ├── Student errors (last 5 grammar mistakes)            │ │   │
+│  │  │  └── Vocabulary introduced this session                  │ │   │
+│  │  └─────────────────────────────────────────────────────────┘ │   │
+│  │                                                                │   │
+│  │  ┌─────────────────────────────────────────────────────────┐ │   │
+│  │  │  Student Profile (persistent)                            │ │   │
+│  │  │  ├── CEFR level                                          │ │   │
+│  │  │  ├── Common errors (aggregated)                          │ │   │
+│  │  │  ├── Known vocabulary                                    │ │   │
+│  │  │  ├── Interests / preferences                             │ │   │
+│  │  │  └── Progress metrics                                    │ │   │
+│  │  └─────────────────────────────────────────────────────────┘ │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  RESPONSE GENERATION                                          │   │
+│  │                                                                │   │
+│  │  1. Receive student transcript + analysis results             │   │
+│  │  2. Determine conversation action:                            │   │
+│  │     ├── Respond to content (continue conversation)            │   │
+│  │     ├── Correct grammar (if error detected)                   │   │
+│  │     ├── Encourage (if student struggling)                     │   │
+│  │     ├── Introduce new vocabulary                              │   │
+│  │     └── Advance topic (if current subtopic complete)          │   │
+│  │  3. Generate response with appropriate complexity             │   │
+│  │  4. Include natural corrections (not interrupting flow)       │   │
+│  │  5. Add follow-up question to keep conversation going         │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.3 Prompt Templates
+
+```python
+CONVERSATION_SYSTEM_PROMPT = """
+You are a friendly English conversation partner for Vietnamese students.
+
+## Your Role
+- You are playing the role of: {ai_role}
+- The scenario is: {scenario}
+- The student is playing: {student_role}
+
+## Student Information
+- English level: {cefr_level} ({level_description})
+- Age: {age}
+- Learning goal: {learning_goal}
+- Common mistakes to watch for: {common_errors}
+
+## Conversation Rules
+1. Stay in character throughout the conversation
+2. Keep responses SHORT (1-3 sentences)
+3. Use vocabulary appropriate for {cefr_level} level
+4. If the student makes a grammar error, correct it NATURALLY by 
+   using the correct form in your response (don't lecture)
+5. If the student seems stuck, give a hint or ask a simpler question
+6. If the student uses Vietnamese, respond in English but acknowledge 
+   they can use Vietnamese if needed
+7. Introduce 1-2 new vocabulary words naturally in conversation
+8. Ask follow-up questions to keep the conversation flowing
+9. Be encouraging and positive, celebrate small wins
+10. When the topic is well-covered, naturally wrap up
+
+## Target Learning Objectives
+- Vocabulary: {target_vocabulary}
+- Grammar: {target_grammar}
+- Pronunciation: {target_pronunciation}
+
+## Current Conversation State
+- Turn: {turn_number}/{max_turns}
+- Subtopic: {current_subtopic}
+- Student's grammar score trend: {grammar_trend}
+- Words learned this session: {words_learned}
+"""
+
+GRAMMAR_CHECK_PROMPT = """
+You are an English grammar checker for Vietnamese students.
+
+## Task
+Analyze the following English text spoken by a Vietnamese student at {cefr_level} level.
+Identify grammar errors and provide corrections with Vietnamese explanations.
+
+## Student's text: "{student_text}"
+
+## Context
+- Topic: {topic}
+- Expected grammar patterns: {target_grammar}
+- Student's recent errors: {recent_errors}
+
+## Output Format (JSON)
+{{
+  "has_errors": true/false,
+  "corrections": [
+    {{
+      "original": "original text segment",
+      "corrected": "corrected text segment",
+      "error_type": "tense|article|preposition|word_order|vocabulary|subject_verb|...",
+      "explanation_en": "Brief explanation in English",
+      "explanation_vi": "Giải thích bằng tiếng Việt",
+      "severity": "minor|moderate|major"
+    }}
+  ],
+  "overall_score": 0-100,
+  "encouragement_vi": "Lời động viên bằng tiếng Việt"
+}}
+"""
+```
+
+---
+
+## 4. Database Architecture
+
+### 4.1 Entity Relationship Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    DATABASE SCHEMA                                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────┐     ┌──────────────────┐     ┌──────────────┐   │
+│  │    users      │     │ conversation_    │     │   topics      │   │
+│  ├──────────────┤     │ sessions         │     ├──────────────┤   │
+│  │ id (PK)      │◀──┐├──────────────────┤┌──▶│ id (PK)      │   │
+│  │ phone        │   ││ id (PK)          ││   │ title_en     │   │
+│  │ name         │   ││ user_id (FK) ────┘│   │ title_vi     │   │
+│  │ cefr_level   │   ││ topic_id (FK) ────────│ category     │   │
+│  │ plan         │   ││ started_at       │   │ level        │   │
+│  │ ...          │   ││ duration_seconds │   │ turns (JSON) │   │
+│  └──────┬───────┘   ││ grammar_score    │   │ ...          │   │
+│         │           ││ pron_score       │   └──────────────┘   │
+│         │           ││ overall_score    │                       │
+│         │           ││ ...              │                       │
+│         │           │└────────┬─────────┘                       │
+│         │           │         │                                   │
+│         │           │         ▼                                   │
+│         │           │┌──────────────────┐     ┌──────────────┐   │
+│         │           ││ conversation_    │     │  vocabulary_  │   │
+│         │           ││ turns            │     │  items        │   │
+│         │           │├──────────────────┤     ├──────────────┤   │
+│         │           ││ id (PK)          │     │ id (PK)      │   │
+│         │           ││ session_id (FK)  │     │ user_id (FK) │──┘
+│         │           ││ turn_number      │     │ word         │   │
+│         │           ││ role             │     │ phonetic     │   │
+│         │           ││ student_text     │     │ meaning_vi   │   │
+│         │           ││ ai_text          │     │ ease_factor  │   │
+│         │           ││ grammar_json     │     │ interval     │   │
+│         │           ││ pron_score       │     │ next_review  │   │
+│         │           ││ audio_url        │     │ ...          │   │
+│         │           ││ ...              │     └──────────────┘   │
+│         │           │└──────────────────┘                         │
+│         │           │                                             │
+│         ▼           ▼                                             │
+│  ┌──────────────────┐     ┌──────────────────┐                   │
+│  │  parent_         │     │  school_         │                   │
+│  │  children        │     │  classes         │                   │
+│  ├──────────────────┤     ├──────────────────┤                   │
+│  │ parent_id (FK)   │     │ id (PK)          │                   │
+│  │ child_id (FK)    │     │ teacher_id (FK)  │                   │
+│  │ relationship     │     │ name             │                   │
+│  └──────────────────┘     │ grade            │                   │
+│                            │ school_name      │                   │
+│                            │ ...              │                   │
+│                            └──────────────────┘                   │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 4.2 Key Indexes
+
+```sql
+-- Performance-critical indexes
+CREATE INDEX idx_users_phone ON users(phone);
+CREATE INDEX idx_sessions_user_id ON conversation_sessions(user_id);
+CREATE INDEX idx_sessions_started_at ON conversation_sessions(started_at DESC);
+CREATE INDEX idx_turns_session_id ON conversation_turns(session_id);
+CREATE INDEX idx_vocabulary_user_review ON vocabulary_items(user_id, next_review_at);
+CREATE INDEX idx_vocabulary_user_word ON vocabulary_items(user_id, word);
+
+-- Analytics indexes
+CREATE INDEX idx_sessions_user_date ON conversation_sessions(user_id, started_at);
+CREATE INDEX idx_turns_scores ON conversation_turns(session_id, grammar_score, pron_score);
+```
+
+---
+
+## 5. Real-Time Communication
+
+### 5.1 WebSocket Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    WEBSOCKET MANAGER                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  Connection Manager                                           │   │
+│  │  ├── Maintain active connections (user_id → WebSocket)        │   │
+│  │  ├── Handle reconnection (resume from last turn)              │   │
+│  │  ├── Rate limiting (max 1 concurrent conversation/user)       │   │
+│  │  └── Heartbeat (ping/pong every 30s)                          │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  Message Types                                                │   │
+│  │                                                                │   │
+│  │  Client → Server:                                             │   │
+│  │  ├── audio_start     → Begin audio streaming                  │   │
+│  │  ├── audio_chunk     → Binary audio data                      │   │
+│  │  ├── audio_end       → End of utterance                       │   │
+│  │  ├── text_message    → Text input (fallback)                  │   │
+│  │  ├── turn_complete   → Student signals done speaking          │   │
+│  │  └── session_end     → End conversation                       │   │
+│  │                                                                │   │
+│  │  Server → Client:                                             │   │
+│  │  ├── transcript_partial  → Real-time ASR results              │   │
+│  │  ├── transcript_final    → Final transcript                   │   │
+│  │  ├── ai_typing           → AI is generating response          │   │
+│  │  ├── ai_response         → Full response (text + audio URL)   │   │
+│  │  ├── feedback            → Grammar/pronunciation feedback     │   │
+│  │  ├── session_summary     → End-of-session summary             │   │
+│  │  └── error               → Error message                      │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 5.2 Connection State Machine
+
+```
+                    ┌─────────┐
+                    │  IDLE    │
+                    └────┬────┘
+                         │ connect
+                         ▼
+                    ┌─────────┐
+              ┌────▶│CONNECTED│
+              │     └────┬────┘
+              │          │ start_conversation
+              │          ▼
+              │     ┌─────────┐
+              │     │  READY   │◀─────────────────────┐
+              │     └────┬────┘                       │
+              │          │ audio_start                 │
+              │          ▼                             │
+              │     ┌─────────┐                       │
+              │     │STREAMING│                       │
+              │     └────┬────┘                       │
+              │          │ audio_end / turn_complete   │
+              │          ▼                             │
+              │     ┌─────────┐    ai_response        │
+              │     │PROCESSING│──────────────────────┘
+              │     └────┬────┘
+              │          │ session_end
+              │          ▼
+              │     ┌─────────┐
+              │     │  ENDED   │
+              │     └─────────┘
+              │
+              │ disconnect (any state)
+              └──────────────────────▶ DISCONNECTED
+                                       (auto-reconnect)
+```
+
+---
+
+## 6. Caching Strategy
+
+### 6.1 Cache Layers
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    CACHING ARCHITECTURE                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Layer 1: CDN (Cloudflare)                                          │
+│  ├── Static assets (JS, CSS, images)                                │
+│  ├── TTS audio files (popular phrases)                              │
+│  └── TTL: 7 days                                                    │
+│                                                                      │
+│  Layer 2: Application Cache (Redis)                                  │
+│  ├── User sessions (JWT tokens)         TTL: 24h                    │
+│  ├── Conversation context               TTL: 1h (extend on active)  │
+│  ├── TTS audio cache (same text → same audio)  TTL: 1h              │
+│  ├── Grammar check cache (same text)    TTL: 30min                  │
+│  ├── Topic data (static)                TTL: 24h                    │
+│  ├── User profile                       TTL: 15min                  │
+│  └── Rate limit counters                TTL: 1min                   │
+│                                                                      │
+│  Layer 3: Database Query Cache (PostgreSQL)                         │
+│  ├── Materialized views for analytics                               │
+│  ├── Connection pooling (PgBouncer)                                 │
+│  └── Prepared statements                                            │
+│                                                                      │
+│  Layer 4: Client Cache                                              │
+│  ├── Service Worker (offline fallback)                              │
+│  ├── LocalStorage (user preferences)                                │
+│  └── IndexedDB (vocabulary cache for offline review)                │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 6.2 Cache Key Patterns
+
+```python
+# Cache key patterns
+CACHE_KEYS = {
+    # User
+    "user:profile:{user_id}": "User profile data",
+    "user:session:{user_id}": "Active session data",
+    
+    # Conversation
+    "conv:context:{session_id}": "Conversation context (last 10 turns)",
+    "conv:state:{session_id}": "Conversation state machine",
+    
+    # TTS
+    "tts:audio:{text_hash}:{voice}:{speed}": "Cached TTS audio URL",
+    
+    # Grammar
+    "grammar:{text_hash}:{level}": "Cached grammar check results",
+    
+    # Topics
+    "topics:list:{level}:{category}": "Topic list by level/category",
+    "topics:detail:{topic_id}": "Topic details",
+    
+    # Rate limiting
+    "ratelimit:api:{user_id}:{endpoint}": "API rate limit counter",
+    "ratelimit:ws:{user_id}": "WebSocket connection limit",
+}
+```
+
+---
+
+## 7. Security Architecture
+
+### 7.1 Authentication Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    AUTHENTICATION FLOW                                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Phone OTP Authentication (Primary - VN market)                     │
+│                                                                      │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐  │
+│  │  Client   │────▶│  Auth     │────▶│  SMS      │────▶│  User    │  │
+│  │  enters   │     │  Service  │     │  Provider  │     │  receives│  │
+│  │  phone    │     │  generates│     │  sends OTP │     │  OTP     │  │
+│  │  number   │     │  OTP      │     │           │     │          │  │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘  │
+│                                                                      │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐                    │
+│  │  Client   │────▶│  Auth     │────▶│  Redis    │                    │
+│  │  enters   │     │  Service  │     │  verify   │                    │
+│  │  OTP code │     │  validates│     │  OTP      │                    │
+│  └──────────┘     └──────────┘     └──────────┘                    │
+│                          │                                           │
+│                          ▼                                           │
+│                   ┌──────────┐     ┌──────────┐                     │
+│                   │  Generate │────▶│  Client   │                     │
+│                   │  JWT      │     │  stores   │                     │
+│                   │  token    │     │  token    │                     │
+│                   └──────────┘     └──────────┘                     │
+│                                                                      │
+│  JWT Token Structure:                                                │
+│  {                                                                   │
+│    "sub": "user_id",                                                 │
+│    "phone": "0902018245",                                            │
+│    "plan": "PREMIUM",                                                │
+│    "exp": 1717046400,                                                │
+│    "iat": 1716960000                                                 │
+│  }                                                                   │
+│                                                                      │
+│  Token TTL: 24 hours (refresh token: 30 days)                       │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 7.2 Data Encryption
+
+| Data Type | At Rest | In Transit | Key Management |
+|-----------|---------|------------|----------------|
+| User PII (phone, name) | AES-256 | TLS 1.3 | AWS KMS / Vault |
+| Audio recordings | AES-256 | TLS 1.3 | Per-user key |
+| Password/OTP | bcrypt (12 rounds) | TLS 1.3 | N/A |
+| JWT tokens | N/A (stateless) | TLS 1.3 | HS256 secret |
+| API keys (OpenAI etc.) | Encrypted env | TLS 1.3 | Environment vars |
+
+---
+
+## 8. Monitoring & Observability
+
+### 8.1 Metrics
+
+```python
+# Key metrics to track
+METRICS = {
+    # Conversation metrics
+    "conversation.started": Counter,
+    "conversation.completed": Counter,
+    "conversation.abandoned": Counter,
+    "conversation.duration": Histogram,
+    "conversation.turns": Histogram,
+    "conversation.grammar_score": Histogram,
+    "conversation.pron_score": Histogram,
+    
+    # Latency metrics
+    "asr.latency": Histogram,          # Speech-to-text latency
+    "llm.latency": Histogram,          # LLM response latency
+    "tts.latency": Histogram,          # Text-to-speech latency
+    "e2e.latency": Histogram,          # End-to-end response latency
+    
+    # Error metrics
+    "asr.error_rate": Gauge,
+    "llm.error_rate": Gauge,
+    "tts.error_rate": Gauge,
+    "websocket.disconnections": Counter,
+    
+    # Business metrics
+    "users.registered": Counter,
+    "users.active_daily": Gauge,
+    "subscriptions.converted": Counter,
+    "subscriptions.churned": Counter,
+    "revenue.mrr": Gauge,
+}
+```
+
+### 8.2 Alerting Rules
+
+| Alert | Condition | Severity | Action |
+|-------|-----------|----------|--------|
+| High ASR latency | p95 > 2s | Warning | Check Deepgram status |
+| LLM errors | > 5% error rate | Critical | Switch to backup model |
+| WebSocket drops | > 10% disconnect rate | Critical | Check server load |
+| Low conversation completion | < 40% | Warning | Check UX flow |
+| High API costs | > $500/day | Warning | Review model usage |
+| Database connection pool | > 80% utilized | Warning | Scale connections |
+
+---
+
+## 9. Deployment Architecture
+
+### 9.1 CI/CD Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    CI/CD PIPELINE (GitHub Actions)                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Push to main                                                        │
+│       │                                                              │
+│       ▼                                                              │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐  │
+│  │  Lint     │────▶│  Test     │────▶│  Build    │────▶│  Deploy   │  │
+│  │  + Format │     │  (pytest) │     │  Docker   │     │  Railway  │  │
+│  └──────────┘     └──────────┘     └──────────┘     └──────────┘  │
+│       │                │                               │            │
+│       │                │                               ▼            │
+│       │                │                         ┌──────────┐       │
+│       │                │                         │  Health   │       │
+│       │                │                         │  Check    │       │
+│       │                │                         └──────────┘       │
+│       │                │                               │            │
+│       │                │                               ▼            │
+│       │                │                         ┌──────────┐       │
+│       │                │                         │  Notify   │       │
+│       │                │                         │  (Discord)│       │
+│       │                │                         └──────────┘       │
+│                                                                      │
+│  Frontend (Vercel):                                                  │
+│  Push → Auto-deploy → Preview URL → Production                      │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 9.2 Environment Configuration
+
+```yaml
+# Environment variables
+environments:
+  development:
+    DEBUG: true
+    DATABASE_URL: postgresql://localhost:5432/ai_english_coach_dev
+    REDIS_URL: redis://localhost:6379/0
+    OPENAI_API_KEY: ${DEV_OPENAI_KEY}
+    LOG_LEVEL: DEBUG
+    
+  staging:
+    DEBUG: false
+    DATABASE_URL: ${STAGING_DATABASE_URL}
+    REDIS_URL: ${STAGING_REDIS_URL}
+    OPENAI_API_KEY: ${STAGING_OPENAI_KEY}
+    LOG_LEVEL: INFO
+    
+  production:
+    DEBUG: false
+    DATABASE_URL: ${PROD_DATABASE_URL}
+    REDIS_URL: ${PROD_REDIS_URL}
+    OPENAI_API_KEY: ${PROD_OPENAI_KEY}
+    LOG_LEVEL: WARNING
+    SENTRY_DSN: ${SENTRY_DSN}
+    REPLICAS: 3
+```
+
+---
+
+## 10. Scalability Plan
+
+### 10.1 Scaling Strategy
+
+| Phase | Users | Architecture | Cost/Month |
+|-------|-------|--------------|------------|
+| MVP | 0-1K | Single server, shared DB | $50 |
+| Growth | 1K-10K | 3 app servers, dedicated DB | $300 |
+| Scale | 10K-100K | Auto-scaling, read replicas | $2,000 |
+| Scale+ | 100K-1M | Multi-region, sharded DB | $15,000 |
+
+### 10.2 Cost Optimization
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    COST OPTIMIZATION STRATEGIES                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  1. ASR Cost Reduction                                               │
+│  ├── Cache common phrases (greetings, common questions)             │
+│  ├── Use Whisper for free tier (batch, cheaper)                     │
+│  ├── Use Deepgram only for premium (streaming, better UX)          │
+│  └── Estimated savings: 40%                                         │
+│                                                                      │
+│  2. LLM Cost Reduction                                               │
+│  ├── Use GPT-4o-mini for conversation (10x cheaper than GPT-4o)    │
+│  ├── Use Claude Haiku for grammar checking (fastest, cheapest)      │
+│  ├── Cache grammar checks for similar sentences                     │
+│  ├── Batch similar requests                                         │
+│  └── Estimated savings: 60%                                         │
+│                                                                      │
+│  3. TTS Cost Reduction                                               │
+│  ├── Cache common responses (greetings, encouragement)              │
+│  ├── Pre-generate topic introductions                               │
+│  ├── Use cheaper model for non-critical audio                       │
+│  └── Estimated savings: 30%                                         │
+│                                                                      │
+│  4. Infrastructure Optimization                                      │
+│  ├── Auto-scale based on time of day (peak: 6-9pm VN time)         │
+│  ├── Spot instances for non-critical workloads                      │
+│  ├── CDN for all static assets                                      │
+│  └── Estimated savings: 50%                                         │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
