@@ -1,108 +1,68 @@
-"""
-AI English Coach — Conversations API
-"""
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.database import get_db
-from app.services.conversation_service import ConversationService
+import uuid
+from datetime import datetime
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from uuid import UUID
 
-router = APIRouter()
+router = APIRouter(prefix="/conversations", tags=["conversations"])
+
+# In-memory session store for development
+sessions: dict[str, dict] = {}
 
 
 class StartConversationRequest(BaseModel):
     topic_id: str
-    voice: Optional[str] = "friendly_female"
-    speed: Optional[float] = 0.9
+    name: str
 
 
-class ConversationResponse(BaseModel):
+class SessionResponse(BaseModel):
     session_id: str
-    topic_id: str
     ai_greeting: str
-    ai_audio_url: Optional[str] = None
 
 
-@router.post("/start", response_model=ConversationResponse)
-async def start_conversation(
-    request: StartConversationRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    """Start a new conversation session."""
-    service = ConversationService(db)
-    session = await service.start_session(
-        topic_id=request.topic_id,
-        voice=request.voice,
-        speed=request.speed
+@router.post("/start", response_model=SessionResponse)
+async def start_conversation(request: StartConversationRequest):
+    session_id = str(uuid.uuid4())
+    sessions[session_id] = {
+        "session_id": session_id,
+        "topic_id": request.topic_id,
+        "name": request.name,
+        "status": "active",
+        "total_turns": 0,
+        "avg_grammar_score": None,
+        "avg_pronunciation_score": None,
+        "overall_score": None,
+        "started_at": datetime.utcnow().isoformat(),
+        "ended_at": None,
+    }
+    return SessionResponse(
+        session_id=session_id,
+        ai_greeting=f"Hello {request.name}! Let's practice English with the topic: {request.topic_id}. How are you today?",
     )
-    return session
-
-
-@router.websocket("/{session_id}")
-async def conversation_websocket(
-    websocket: WebSocket,
-    session_id: str
-):
-    """Real-time voice conversation via WebSocket."""
-    await websocket.accept()
-    service = ConversationService()
-
-    try:
-        while True:
-            data = await websocket.receive_json()
-
-            if data.get("type") == "audio_end":
-                # Process audio and generate response
-                result = await service.process_turn(
-                    session_id=session_id,
-                    audio_data=data.get("audio_base64")
-                )
-                await websocket.send_json({
-                    "type": "ai_response",
-                    "text": result["ai_text"],
-                    "audio_url": result["ai_audio_url"],
-                    "feedback": result["feedback"]
-                })
-
-            elif data.get("type") == "text_message":
-                result = await service.process_text_turn(
-                    session_id=session_id,
-                    text=data.get("text")
-                )
-                await websocket.send_json({
-                    "type": "ai_response",
-                    "text": result["ai_text"],
-                    "audio_url": result["ai_audio_url"],
-                    "feedback": result["feedback"]
-                })
-
-            elif data.get("type") == "session_end":
-                summary = await service.end_session(session_id)
-                await websocket.send_json({
-                    "type": "session_summary",
-                    **summary
-                })
-                break
-
-    except WebSocketDisconnect:
-        pass
-    except Exception as e:
-        await websocket.send_json({"type": "error", "message": str(e)})
-    finally:
-        await websocket.close()
 
 
 @router.get("/{session_id}")
-async def get_session(session_id: str, db: AsyncSession = Depends(get_db)):
-    """Get conversation session details."""
-    service = ConversationService(db)
-    return await service.get_session(session_id)
+async def get_conversation(session_id: str):
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
 
 
-@router.get("/{session_id}/feedback")
-async def get_feedback(session_id: str, db: AsyncSession = Depends(get_db)):
-    """Get detailed feedback for a session."""
-    service = ConversationService(db)
-    return await service.get_feedback(session_id)
+@router.post("/{session_id}/end")
+async def end_conversation(session_id: str):
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    session["status"] = "completed"
+    session["ended_at"] = datetime.utcnow().isoformat()
+    session["overall_score"] = 75.5
+
+    return {
+        "session_id": session_id,
+        "status": "completed",
+        "total_turns": session["total_turns"],
+        "overall_score": session["overall_score"],
+        "summary": "Great conversation! Keep practicing to improve your skills.",
+    }

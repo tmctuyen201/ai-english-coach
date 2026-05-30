@@ -1,18 +1,18 @@
-"""
-AI English Coach — Auth API
-"""
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.database import get_db
-from app.core.config import settings
-from pydantic import BaseModel
-from datetime import datetime, timedelta
-from jose import jwt
 import random
-import redis.asyncio as redis
+import string
+from datetime import datetime
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
-router = APIRouter()
-redis_client = redis.from_url(settings.REDIS_URL)
+from app.core.database import get_db
+from app.models.models import User
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+# In-memory OTP store
+otp_store: dict[str, str] = {}
 
 
 class OTPRequest(BaseModel):
@@ -26,50 +26,31 @@ class OTPVerify(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
-    refresh_token: str
     token_type: str = "bearer"
 
 
-def create_token(data: dict, expires_delta: timedelta) -> str:
-    to_encode = data.copy()
-    expire = datetime.utcnow() + expires_delta
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
-
-
-@router.post("/phone/send-otp", status_code=status.HTTP_200_OK)
+@router.post("/phone/send-otp")
 async def send_otp(request: OTPRequest):
-    """Send OTP to phone number."""
-    otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
-    await redis_client.setex(
-        f"otp:{request.phone}",
-        settings.OTP_EXPIRE_MINUTES * 60,
-        otp
-    )
-    # TODO: integrate SMS provider (Twilio/Viettel)
-    return {"message": "OTP sent", "phone": request.phone}
+    otp = "".join(random.choices(string.digits, k=6))
+    otp_store[request.phone] = otp
+    return {"message": f"OTP sent to {request.phone}", "phone": request.phone}
 
 
 @router.post("/phone/verify", response_model=TokenResponse)
 async def verify_otp(request: OTPVerify, db: AsyncSession = Depends(get_db)):
-    """Verify OTP and return JWT tokens."""
-    stored_otp = await redis_client.get(f"otp:{request.phone}")
-    if not stored_otp or stored_otp.decode() != request.otp:
-        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    stored_otp = otp_store.get(request.phone)
+    if not stored_otp or stored_otp != request.otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
 
-    await redis_client.delete(f"otp:{request.phone}")
+    # Clean up OTP
+    otp_store.pop(request.phone, None)
 
-    # TODO: find or create user in database
-    access_token = create_token(
-        {"sub": request.phone, "type": "access"},
-        timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-    refresh_token = create_token(
-        {"sub": request.phone, "type": "refresh"},
-        timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    )
+    # Find or create user
+    result = await db.execute(select(User).where(User.phone == request.phone))
+    user = result.scalar_one_or_none()
+    if not user:
+        user = User(phone=request.phone, name=f"User {request.phone[-4:]}")
+        db.add(user)
+        await db.flush()
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token
-    )
+    return {"access_token": f"fake-jwt-token-{user.id}"}
