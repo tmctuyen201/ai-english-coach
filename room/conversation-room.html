@@ -4,514 +4,275 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>AI English Coach — Voice Room</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#0a0a0f;--card:#14141f;--border:#2a2a3e;
-  --text:#e8e8f0;--muted:#7878a0;
-  --accent:#6366f1;--accent-glow:rgba(99,102,241,0.3);
-  --green:#22c55e;--red:#ef4444;--yellow:#f59e0b;
+  --bg:#09090b;--bg2:#111114;--bg3:#18181b;--bg4:#1f1f23;
+  --border:#27272a;--border2:#3f3f46;
+  --text:#fafafa;--text2:#a1a1aa;--text3:#71717a;
+  --accent:#6366f1;--accent2:#818cf8;--accent3:#a5b4fc;
+  --green:#22c55e;--green2:#4ade80;
+  --red:#ef4444;--yellow:#f59e0b;
+  --gradient:linear-gradient(135deg,#6366f1,#06b6d4);
+  --glow:0 0 40px rgba(99,102,241,0.12);
+  --radius:16px;--radius-sm:10px;--radius-xs:6px;
 }
-html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text)}
 
-/* ── Lobby ── */
-#lobby{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px}
-#lobby h1{font-size:28px;font-weight:700;background:linear-gradient(135deg,#818cf8,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
-#lobby .sub{color:var(--muted);font-size:15px;margin-bottom:32px}
-#lobby input{width:100%;max-width:360px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:16px;outline:none;margin-bottom:20px;text-align:center}
-#lobby input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
-#lobby input::placeholder{color:var(--muted)}
-.topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;width:100%;max-width:500px;margin-bottom:24px}
-.topic-btn{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:18px 12px;cursor:pointer;text-align:center;transition:all 0.2s}
-.topic-btn:hover,.topic-btn.selected{border-color:var(--accent);background:rgba(99,102,241,0.08)}
-.topic-btn .icon{font-size:28px;display:block;margin-bottom:6px}
+/* ═══ LOBBY ═══ */
+#lobby{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:32px;position:relative;overflow:hidden}
+#lobby::before{content:'';position:absolute;top:-300px;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 60%);pointer-events:none}
+#lobby>*{position:relative;z-index:1}
+#lobby .logo{font-size:14px;color:var(--text3);margin-bottom:40px;display:flex;align-items:center;gap:8px}
+#lobby .logo span{font-weight:600;color:var(--text2)}
+#lobby h1{font-size:clamp(28px,5vw,40px);font-weight:700;text-align:center;margin-bottom:8px;letter-spacing:-0.02em}
+#lobby h1 em{font-style:normal;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#lobby .sub{font-size:15px;color:var(--text2);text-align:center;margin-bottom:36px}
+#lobby input{width:100%;max-width:380px;padding:14px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:15px;font-family:inherit;outline:none;text-align:center;transition:all 0.2s}
+#lobby input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,0.12)}
+#lobby input::placeholder{color:var(--text3)}
+
+.topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;width:100%;max-width:520px;margin-bottom:28px}
+.topic-btn{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:20px 12px;cursor:pointer;text-align:center;transition:all 0.2s}
+.topic-btn:hover{border-color:var(--accent);background:rgba(99,102,241,0.05)}
+.topic-btn.selected{border-color:var(--accent);background:rgba(99,102,241,0.08);box-shadow:0 0 20px rgba(99,102,241,0.1)}
+.topic-btn .icon{font-size:28px;display:block;margin-bottom:8px}
 .topic-btn .name{font-size:13px;font-weight:600;color:var(--text)}
-.topic-btn .level{font-size:11px;color:var(--muted);margin-top:2px}
-#start-btn{padding:14px 48px;background:linear-gradient(135deg,var(--accent),#818cf8);border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:transform 0.15s}
-#start-btn:hover{transform:scale(1.03)}
-#start-btn:active{transform:scale(0.98)}
+.topic-btn .level{font-size:11px;color:var(--text3);margin-top:3px}
 
-/* ── Room ── */
-#room{display:none;flex-direction:column;height:100vh}
-.top-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--card)}
-.top-bar .left{display:flex;align-items:center;gap:10px}
-.top-bar .back{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px}
-.top-bar .topic-name{font-size:15px;font-weight:600}
-.top-bar .topic-level{font-size:11px;color:var(--muted)}
-.top-bar .turns{font-size:13px;color:var(--muted)}
-.top-bar .end-btn{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer}
+#start-btn{padding:14px 48px;background:var(--gradient);border:none;border-radius:var(--radius-sm);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.2s}
+#start-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(99,102,241,0.3)}
+#start-btn:active{transform:translateY(0)}
 
-/* Chat area */
-.chat{flex:1;overflow-y:auto;padding:20px;scroll-behavior:smooth}
-.msg{margin-bottom:16px;max-width:85%;animation:fadeIn 0.3s ease}
+/* ═══ ROOM ═══ */
+#room{display:none;flex-direction:column;height:100vh;background:var(--bg)}
+
+/* Top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);min-height:56px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-back{width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.topbar-back:hover{border-color:var(--accent);color:var(--text)}
+.topbar-info .topic{font-size:14px;font-weight:600}
+.topbar-info .meta{font-size:11px;color:var(--text3);margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-turns{font-size:12px;color:var(--text3);padding:4px 10px;background:var(--bg3);border-radius:100px}
+.topbar-end{padding:8px 16px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;color:var(--red);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.2s}
+.topbar-end:hover{background:rgba(239,68,68,0.2)}
+
+/* Chat */
+.chat{flex:1;overflow-y:auto;padding:20px;scroll-behavior:smooth;display:flex;flex-direction:column;gap:4px}
+.msg{max-width:82%;animation:msg-in 0.35s ease}
 .msg.ai{align-self:flex-start}
-.msg.student{align-self:flex-end;margin-left:auto}
-.msg .bubble{padding:14px 18px;border-radius:18px;font-size:15px;line-height:1.6}
-.msg.ai .bubble{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px}
-.msg.student .bubble{background:linear-gradient(135deg,var(--accent),#818cf8);color:#fff;border-bottom-right-radius:4px}
-.msg .label{font-size:11px;color:var(--muted);margin-bottom:4px;padding:0 4px}
+.msg.student{align-self:flex-end}
+.msg .label{font-size:11px;color:var(--text3);margin-bottom:4px;padding:0 4px}
 .msg.student .label{text-align:right}
-.typing{display:flex;gap:5px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;width:fit-content;margin-bottom:16px}
-.typing span{width:8px;height:8px;background:var(--muted);border-radius:50%;animation:bounce 1.4s infinite}
-.typing span:nth-child(2){animation-delay:0.2s}
-.typing span:nth-child(3){animation-delay:0.4s}
-@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg .bubble{padding:12px 16px;font-size:14px;line-height:1.65}
+.msg.ai .bubble{background:var(--bg3);border:1px solid var(--border);border-radius:4px 16px 16px 16px}
+.msg.student .bubble{background:var(--gradient);color:#fff;border-radius:16px 16px 4px 16px}
+
+.typing{display:flex;gap:5px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:4px 16px 16px 16px;width:fit-content;margin-bottom:8px}
+.typing span{width:6px;height:6px;background:var(--text3);border-radius:50%;animation:bounce 1.4s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+@keyframes msg-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* Input area */
-.input-area{padding:16px 20px;border-top:1px solid var(--border);background:var(--card)}
-.input-row{display:flex;align-items:center;gap:12px}
-.text-input{flex:1;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:24px;color:var(--text);font-size:15px;outline:none}
-.text-input:focus{border-color:var(--accent)}
-.text-input::placeholder{color:var(--muted)}
-.send-btn{width:44px;height:44px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.send-btn:disabled{opacity:0.4;cursor:default}
-
-/* Mic button */
-.mic-area{display:flex;flex-direction:column;align-items:center;padding:20px;gap:12px}
-.mic-btn{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#818cf8);border:none;color:#fff;font-size:32px;cursor:pointer;position:relative;transition:all 0.2s;box-shadow:0 4px 24px var(--accent-glow)}
-.mic-btn:hover{transform:scale(1.05)}
-.mic-btn.recording{background:linear-gradient(135deg,var(--red),#f87171);box-shadow:0 4px 24px rgba(239,68,68,0.4);animation:pulse 1.5s infinite}
-.mic-btn:disabled{opacity:0.3;cursor:default}
-@keyframes pulse{0%,100%{box-shadow:0 4px 24px rgba(239,68,68,0.4)}50%{box-shadow:0 4px 40px rgba(239,68,68,0.7)}}
-.mic-hint{font-size:13px;color:var(--muted)}
-.transcript-live{font-size:14px;color:var(--accent-light);min-height:20px;text-align:center;max-width:90%}
+.input-area{padding:12px 20px 16px;background:var(--bg2);border-top:1px solid var(--border)}
 
 /* Mode toggle */
-.mode-toggle{display:flex;gap:8px;justify-content:center;margin-bottom:8px}
-.mode-btn{padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.2s}
-.mode-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.mode-row{display:flex;justify-content:center;gap:6px;margin-bottom:10px}
+.mode-pill{padding:5px 14px;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer;transition:all 0.2s}
+.mode-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
-/* Summary modal */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:24px}
-.modal-overlay.show{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto}
-.modal h2{font-size:22px;margin-bottom:16px;background:linear-gradient(135deg,#818cf8,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.modal p{color:var(--text);line-height:1.7;margin-bottom:12px}
-.modal .stats{display:flex;gap:16px;margin:20px 0}
-.modal .stat{flex:1;text-align:center;background:var(--bg);padding:16px;border-radius:12px}
-.modal .stat .val{font-size:28px;font-weight:700;color:var(--accent-light)}
-.modal .stat .lbl{font-size:12px;color:var(--muted);margin-top:4px}
-.modal .close-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:16px}
+/* Voice mode */
+.voice-area{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0}
+.transcript{font-size:13px;color:var(--accent3);min-height:18px;text-align:center;max-width:90%;line-height:1.5}
+.mic{width:64px;height:64px;border-radius:50%;background:var(--gradient);border:none;color:#fff;font-size:26px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(99,102,241,0.25)}
+.mic:hover{transform:scale(1.06)}
+.mic.rec{background:linear-gradient(135deg,var(--red),#f87171);box-shadow:0 4px 24px rgba(239,68,68,0.35);animation:pulse-mic 1.5s infinite}
+.mic:disabled{opacity:.35;cursor:default;transform:none}
+@keyframes pulse-mic{0%,100%{box-shadow:0 4px 24px rgba(239,68,68,0.35)}50%{box-shadow:0 4px 40px rgba(239,68,68,0.55)}}
+.mic-hint{font-size:12px;color:var(--text3)}
+
+/* Text mode */
+.text-row{display:flex;gap:10px;align-items:center}
+.text-input{flex:1;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:100px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border 0.2s}
+.text-input:focus{border-color:var(--accent)}
+.text-input::placeholder{color:var(--text3)}
+.send{width:44px;height:44px;border-radius:50%;background:var(--gradient);border:none;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;transition:transform 0.15s}
+.send:hover{transform:scale(1.06)}
+
+/* ═══ SUMMARY MODAL ═══ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:24px}
+.overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:36px;max-width:440px;width:100%;text-align:center;animation:modal-in 0.3s ease}
+@keyframes modal-in{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:none}}
+.modal h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.modal h2 em{font-style:normal;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.modal .subtitle{font-size:14px;color:var(--text2);margin-bottom:24px}
+.modal-stats{display:flex;gap:12px;margin-bottom:24px}
+.modal-stat{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 8px}
+.modal-stat .val{font-size:24px;font-weight:700;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.modal-stat .lbl{font-size:11px;color:var(--text3);margin-top:4px}
+.modal .feedback-title{font-size:13px;font-weight:600;color:var(--accent2);text-align:left;margin-bottom:8px}
+.modal .feedback-text{font-size:14px;color:var(--text2);text-align:left;line-height:1.7;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:24px}
+.modal .close-btn{width:100%;padding:14px;background:var(--gradient);border:none;border-radius:var(--radius-sm);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.2s}
+.modal .close-btn:hover{box-shadow:0 8px 24px rgba(99,102,241,0.3)}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ LOBBY ═══════════════ -->
+<!-- ═══ LOBBY ═══ -->
 <div id="lobby">
-  <h1>🗣️ AI English Coach</h1>
-  <p class="sub">Practice speaking English with your AI teacher</p>
-
+  <div class="logo">🗣️ <span>AI English Coach</span></div>
+  <h1>Ready to <em>practice English</em>?</h1>
+  <p class="sub">Choose a topic and start talking with your AI teacher</p>
   <input type="text" id="name-input" placeholder="What's your name?" maxlength="30">
-
   <div class="topics" id="topic-grid"></div>
-
   <button id="start-btn" onclick="startRoom()">🎙️ Start Conversation</button>
 </div>
 
-<!-- ═══════════════ ROOM ═══════════════ -->
+<!-- ═══ ROOM ═══ -->
 <div id="room">
-  <div class="top-bar">
-    <div class="left">
-      <button class="back" onclick="leaveRoom()">←</button>
-      <div>
-        <div class="topic-name" id="room-topic">Free Chat</div>
-        <div class="topic-level" id="room-level">Level A2</div>
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="topbar-back" onclick="leaveRoom()">←</button>
+      <div class="topbar-info">
+        <div class="topic" id="room-topic">Free Chat</div>
+        <div class="meta" id="room-meta">Level A2</div>
       </div>
     </div>
-    <div class="turns" id="turn-counter">Turn 0</div>
-    <button class="end-btn" onclick="endSession()">End Session</button>
+    <div class="topbar-right">
+      <div class="topbar-turns" id="turn-counter">Turn 0</div>
+      <button class="topbar-end" onclick="endSession()">End</button>
+    </div>
   </div>
 
   <div class="chat" id="chat"></div>
 
   <div class="input-area">
-    <div class="mode-toggle">
-      <button class="mode-btn active" id="mode-voice" onclick="setMode('voice')">🎤 Voice</button>
-      <button class="mode-btn" id="mode-text" onclick="setMode('text')">⌨️ Text</button>
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-voice" onclick="setMode('voice')">🎤 Voice</button>
+      <button class="mode-pill" id="mode-text" onclick="setMode('text')">⌨️ Text</button>
     </div>
-
-    <!-- Voice mode -->
-    <div class="mic-area" id="voice-mode">
-      <div class="transcript-live" id="live-transcript"></div>
-      <button class="mic-btn" id="mic-btn" onmousedown="startMic()" onmouseup="stopMic()" ontouchstart="startMic()" ontouchend="stopMic()">🎤</button>
+    <div class="voice-area" id="voice-mode">
+      <div class="transcript" id="live-transcript"></div>
+      <button class="mic" id="mic-btn" onmousedown="startMic()" onmouseup="stopMic()" ontouchstart="startMic()" ontouchend="stopMic()">🎤</button>
       <div class="mic-hint" id="mic-hint">Hold to speak</div>
     </div>
-
-    <!-- Text mode -->
-    <div class="input-row" id="text-mode" style="display:none">
-      <input type="text" class="text-input" id="text-input" placeholder="Type your message in English..." onkeydown="if(event.key==='Enter')sendText()">
-      <button class="send-btn" onclick="sendText()">→</button>
+    <div class="text-row" id="text-mode" style="display:none">
+      <input type="text" class="text-input" id="text-input" placeholder="Type in English..." onkeydown="if(event.key==='Enter')sendText()">
+      <button class="send" onclick="sendText()">→</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════ SUMMARY MODAL ═══════════════ -->
-<div class="modal-overlay" id="summary-modal">
+<!-- ═══ SUMMARY ═══ -->
+<div class="overlay" id="summary-modal">
   <div class="modal">
-    <h2>📊 Session Complete!</h2>
-    <div class="stats">
-      <div class="stat"><div class="val" id="sum-turns">0</div><div class="lbl">Turns</div></div>
-      <div class="stat"><div class="val" id="sum-topic">-</div><div class="lbl">Topic</div></div>
+    <h2>🎉 <em>Great Practice!</em></h2>
+    <p class="subtitle">Here's how your session went</p>
+    <div class="modal-stats">
+      <div class="modal-stat"><div class="val" id="sum-turns">0</div><div class="lbl">Turns</div></div>
+      <div class="modal-stat"><div class="val" id="sum-topic">💬</div><div class="lbl">Topic</div></div>
     </div>
-    <h3 style="font-size:16px;margin-bottom:8px;color:var(--accent-light)">AI Feedback</h3>
-    <p id="sum-feedback"></p>
+    <div class="feedback-title">📝 AI Feedback</div>
+    <div class="feedback-text" id="sum-feedback">Loading...</div>
     <button class="close-btn" onclick="closeSummary()">Back to Lobby</button>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════
-// TOPICS
-// ═══════════════════════════════════════════════
-const TOPICS = [
-  {id:"free-chat",title_en:"Free Chat",title_vi:"Nói Chuyện Tự Do",level:"A2",icon:"💬"},
-  {id:"ordering-food",title_en:"Ordering Food",title_vi:"Gọi Món",level:"A2",icon:"🍜"},
-  {id:"meeting-people",title_en:"Meeting People",title_vi:"Gặp Gỡ",level:"A1",icon:"👋"},
-  {id:"ielts-part1",title_en:"IELTS Part 1",title_vi:"IELTS Part 1",level:"B1-B2",icon:"🎯"},
-  {id:"job-interview",title_en:"Job Interview",title_vi:"Phỏng Vấn",level:"B1",icon:"💼"}
+const TOPICS=[
+  {id:"free-chat",en:"Free Chat",vi:"Nói Chuyện Tự Do",level:"A2",icon:"💬"},
+  {id:"ordering-food",en:"Ordering Food",vi:"Gọi Món",level:"A2",icon:"🍜"},
+  {id:"meeting-people",en:"Meeting People",vi:"Gặp Gỡ",level:"A1",icon:"👋"},
+  {id:"ielts-part1",en:"IELTS Part 1",vi:"IELTS Part 1",level:"B1-B2",icon:"🎯"},
+  {id:"job-interview",en:"Job Interview",vi:"Phỏng Vấn",level:"B1",icon:"💼"}
 ];
+let selTopic="free-chat",ws=null,isRec=false,recognition=null,curMode="voice",turns=0,synth=window.speechSynthesis;
 
-let selectedTopic = "free-chat";
-let ws = null;
-let isRecording = false;
-let recognition = null;
-let currentMode = "voice";
-let turnCount = 0;
-let synth = window.speechSynthesis;
-
-// ═══════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════
-function init() {
-  const grid = document.getElementById("topic-grid");
-  TOPICS.forEach(t => {
-    const btn = document.createElement("div");
-    btn.className = "topic-btn" + (t.id === selectedTopic ? " selected" : "");
-    btn.innerHTML = `<span class="icon">${t.icon}</span><div class="name">${t.title_en}</div><div class="level">${t.level}</div>`;
-    btn.onclick = () => selectTopic(t.id);
-    grid.appendChild(btn);
+function init(){
+  const g=document.getElementById("topic-grid");
+  TOPICS.forEach(t=>{
+    const b=document.createElement("div");
+    b.className="topic-btn"+(t.id===selTopic?" selected":"");
+    b.innerHTML=`<span class="icon">${t.icon}</span><div class="name">${t.en}</div><div class="level">${t.level}</div>`;
+    b.onclick=()=>{selTopic=t.id;document.querySelectorAll(".topic-btn").forEach(x=>x.classList.remove("selected"));b.classList.add("selected")};
+    g.appendChild(b);
   });
-
-  // Init Web Speech API
-  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-    recognition.maxAlternatives = 1;
-
-    recognition.onresult = (e) => {
-      let interim = '', final = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) final += e.results[i][0].transcript;
-        else interim += e.results[i][0].transcript;
-      }
-      document.getElementById("live-transcript").textContent = interim || final || '';
-      if (final) {
-        sendStudentSpeech(final.trim());
-      }
+  if("webkitSpeechRecognition"in window||"SpeechRecognition"in window){
+    const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+    recognition=new R();recognition.continuous=false;recognition.interimResults=true;recognition.lang="en-US";
+    recognition.onresult=e=>{
+      let i="",f="";
+      for(let j=e.resultIndex;j<e.results.length;j++){if(e.results[j].isFinal)f+=e.results[j][0].transcript;else i+=e.results[j][0].transcript}
+      document.getElementById("live-transcript").textContent=i||f||"";
+      if(f)sendSpeech(f.trim());
     };
-
-    recognition.onerror = (e) => {
-      console.log("Speech error:", e.error);
-      stopRecording();
-      if (e.error === 'no-speech') {
-        document.getElementById("live-transcript").textContent = "Didn't hear anything. Try again.";
-      }
-    };
-
-    recognition.onend = () => {
-      if (isRecording) {
-        stopRecording();
-      }
-    };
+    recognition.onerror=()=>stopRec();
+    recognition.onend=()=>{if(isRec)stopRec()};
   }
 }
 
-function selectTopic(id) {
-  selectedTopic = id;
-  document.querySelectorAll(".topic-btn").forEach(b => b.classList.remove("selected"));
-  event.currentTarget.classList.add("selected");
+function startRoom(){
+  const name=document.getElementById("name-input").value.trim()||"Student";
+  const t=TOPICS.find(x=>x.id===selTopic);
+  document.getElementById("lobby").style.display="none";
+  document.getElementById("room").style.display="flex";
+  document.getElementById("room-topic").textContent=`${t.icon} ${t.en}`;
+  document.getElementById("room-meta").textContent=`${t.level} · ${t.vi}`;
+  document.getElementById("chat").innerHTML="";
+  turns=0;updateTurns();
+  const sid=Math.random().toString(36).slice(2,10);
+  const p=location.protocol==="https:"?"wss:":"ws:";
+  ws=new WebSocket(`${p}//${location.host}/ws/room/${sid}`);
+  ws.onopen=()=>ws.send(JSON.stringify({type:"start",topic:selTopic,name}));
+  ws.onmessage=e=>handleMsg(JSON.parse(e.data));
 }
 
-// ═══════════════════════════════════════════════
-// START / LEAVE ROOM
-// ═══════════════════════════════════════════════
-function startRoom() {
-  const name = document.getElementById("name-input").value.trim() || "Student";
-  const topic = TOPICS.find(t => t.id === selectedTopic);
-
-  document.getElementById("lobby").style.display = "none";
-  document.getElementById("room").style.display = "flex";
-  document.getElementById("room-topic").textContent = `${topic.icon} ${topic.title_en}`;
-  document.getElementById("room-level").textContent = `Level ${topic.level} • ${topic.title_vi}`;
-  document.getElementById("chat").innerHTML = "";
-  turnCount = 0;
-  updateTurns();
-
-  // Connect WebSocket
-  const sessionId = Math.random().toString(36).substring(2, 10);
-  const proto = location.protocol === "https:" ? "wss:" : "ws:";
-  ws = new WebSocket(`${proto}//${location.host}/ws/room/${sessionId}`);
-
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ type: "start", topic: selectedTopic, name }));
-  };
-
-  ws.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-    handleServerMessage(data);
-  };
-
-  ws.onclose = () => {
-    console.log("WebSocket closed");
-  };
-
-  ws.onerror = (e) => {
-    console.error("WebSocket error:", e);
-  };
+function leaveRoom(){
+  if(ws&&ws.readyState===1)ws.send(JSON.stringify({type:"end"}));
+  document.getElementById("room").style.display="none";
+  document.getElementById("lobby").style.display="flex";
+  if(ws)ws.close();synth.cancel();
 }
 
-function leaveRoom() {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "end" }));
-  }
-  document.getElementById("room").style.display = "none";
-  document.getElementById("lobby").style.display = "flex";
-  if (ws) ws.close();
-  synth.cancel();
-}
-
-// ═══════════════════════════════════════════════
-// HANDLE SERVER MESSAGES
-// ═══════════════════════════════════════════════
-function handleServerMessage(data) {
-  switch (data.type) {
-    case "ai_greeting":
-      addAIMessage(data.text);
-      speak(data.text);
-      break;
-
-    case "ai_thinking":
-      showTyping();
-      break;
-
-    case "ai_response":
-      removeTyping();
-      addAIMessage(data.text);
-      speak(data.text);
-      turnCount = data.turn || turnCount;
-      updateTurns();
-      break;
-
-    case "session_summary":
-      showSummary(data);
-      break;
-
-    case "error":
-      removeTyping();
-      addAIMessage(data.message || "Sorry, something went wrong. Try again?");
-      break;
+function handleMsg(d){
+  switch(d.type){
+    case"ai_greeting":addAI(d.text);speak(d.text);break;
+    case"ai_thinking":showTyping();break;
+    case"ai_response":removeTyping();addAI(d.text);speak(d.text);turns=d.turn||turns;updateTurns();break;
+    case"session_summary":removeTyping();showSummary(d);break;
+    case"error":removeTyping();addAI(d.message||"Try again?");break;
   }
 }
 
-// ═══════════════════════════════════════════════
-// CHAT UI
-// ═══════════════════════════════════════════════
-function addAIMessage(text) {
-  const chat = document.getElementById("chat");
-  chat.innerHTML += `
-    <div class="msg ai">
-      <div class="label">🤖 AI Teacher</div>
-      <div class="bubble">${escapeHtml(text)}</div>
-    </div>`;
-  chat.scrollTop = chat.scrollHeight;
-  document.getElementById("mic-btn").disabled = false;
-  document.getElementById("mic-hint").textContent = "Hold to speak";
-}
+function addAI(t){const c=document.getElementById("chat");c.innerHTML+=`<div class="msg ai"><div class="label">🤖 AI</div><div class="bubble">${esc(t)}</div></div>`;c.scrollTop=c.scrollHeight;document.getElementById("mic-btn").disabled=false;document.getElementById("mic-hint").textContent="Hold to speak"}
+function addYou(t){const c=document.getElementById("chat");c.innerHTML+=`<div class="msg student"><div class="label">You</div><div class="bubble">${esc(t)}</div></div>`;c.scrollTop=c.scrollHeight}
+function showTyping(){removeTyping();const c=document.getElementById("chat");c.innerHTML+=`<div class="typing" id="typing"><span></span><span></span><span></span></div>`;c.scrollTop=c.scrollHeight;document.getElementById("mic-btn").disabled=true;document.getElementById("mic-hint").textContent="AI thinking..."}
+function removeTyping(){const e=document.getElementById("typing");if(e)e.remove()}
+function updateTurns(){document.getElementById("turn-counter").textContent=`Turn ${turns}`}
+function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML}
 
-function addStudentMessage(text) {
-  const chat = document.getElementById("chat");
-  chat.innerHTML += `
-    <div class="msg student">
-      <div class="label">You</div>
-      <div class="bubble">${escapeHtml(text)}</div>
-    </div>`;
-  chat.scrollTop = chat.scrollHeight;
-}
+function startMic(){if(!recognition||isRec)return;isRec=true;synth.cancel();document.getElementById("mic-btn").classList.add("rec");document.getElementById("live-transcript").textContent="Listening...";document.getElementById("mic-hint").textContent="Release to send";try{recognition.start()}catch(e){}}
+function stopMic(){if(!isRec)return;isRec=false;document.getElementById("mic-btn").classList.remove("rec");document.getElementById("mic-hint").textContent="Processing...";try{recognition.stop()}catch(e){}}
+function stopRec(){isRec=false;document.getElementById("mic-btn").classList.remove("rec");document.getElementById("mic-hint").textContent="Hold to speak"}
+function sendSpeech(t){if(!t||!ws||ws.readyState!==1)return;document.getElementById("live-transcript").textContent="";addYou(t);ws.send(JSON.stringify({type:"student_speech",text:t}))}
 
-function showTyping() {
-  removeTyping();
-  const chat = document.getElementById("chat");
-  chat.innerHTML += `
-    <div class="typing" id="typing-indicator">
-      <span></span><span></span><span></span>
-    </div>`;
-  chat.scrollTop = chat.scrollHeight;
-  document.getElementById("mic-btn").disabled = true;
-  document.getElementById("mic-hint").textContent = "AI is thinking...";
-}
+function setMode(m){curMode=m;document.getElementById("mode-voice").classList.toggle("active",m==="voice");document.getElementById("mode-text").classList.toggle("active",m==="text");document.getElementById("voice-mode").style.display=m==="voice"?"flex":"none";document.getElementById("text-mode").style.display=m==="text"?"flex":"none";if(m==="text")document.getElementById("text-input").focus()}
+function sendText(){const i=document.getElementById("text-input"),t=i.value.trim();if(!t)return;addYou(t);i.value="";if(ws&&ws.readyState===1)ws.send(JSON.stringify({type:"student_speech",text:t}))}
 
-function removeTyping() {
-  const el = document.getElementById("typing-indicator");
-  if (el) el.remove();
-}
+function speak(t){if(!synth)return;synth.cancel();const u=new SpeechSynthesisUtterance(t.replace(/[*_#`]/g,"").replace(/\n/g," "));u.lang="en-US";u.rate=0.9;const v=synth.getVoices().find(x=>x.lang.startsWith("en"));if(v)u.voice=v;synth.speak(u)}
+if(synth){synth.getVoices();synth.onvoiceschanged=()=>synth.getVoices()}
 
-function updateTurns() {
-  document.getElementById("turn-counter").textContent = `Turn ${turnCount}`;
-}
+function endSession(){if(ws&&ws.readyState===1){showTyping();ws.send(JSON.stringify({type:"end"}))}}
+function showSummary(d){removeTyping();document.getElementById("sum-turns").textContent=d.turns||turns;document.getElementById("sum-topic").textContent=TOPICS.find(x=>x.id===selTopic)?.icon||"💬";document.getElementById("sum-feedback").textContent=d.summary||"Great practice!";document.getElementById("summary-modal").classList.add("show")}
+function closeSummary(){document.getElementById("summary-modal").classList.remove("show");document.getElementById("room").style.display="none";document.getElementById("lobby").style.display="flex";if(ws)ws.close()}
 
-function escapeHtml(text) {
-  const d = document.createElement('div');
-  d.textContent = text;
-  return d.innerHTML;
-}
-
-// ═══════════════════════════════════════════════
-// VOICE RECORDING
-// ═══════════════════════════════════════════════
-function startMic() {
-  if (!recognition) {
-    alert("Your browser doesn't support speech recognition. Please use Chrome or Edge.");
-    return;
-  }
-  if (isRecording) return;
-
-  isRecording = true;
-  synth.cancel(); // Stop any AI speech
-  document.getElementById("mic-btn").classList.add("recording");
-  document.getElementById("live-transcript").textContent = "Listening...";
-  document.getElementById("mic-hint").textContent = "Release to send";
-
-  try {
-    recognition.start();
-  } catch(e) {
-    console.log("Recognition already started");
-  }
-}
-
-function stopMic() {
-  if (!isRecording) return;
-  isRecording = false;
-
-  document.getElementById("mic-btn").classList.remove("recording");
-  document.getElementById("mic-hint").textContent = "Processing...";
-
-  try {
-    recognition.stop();
-  } catch(e) {}
-
-  // The onresult callback will handle sending the text
-  setTimeout(() => {
-    if (document.getElementById("live-transcript").textContent === "Listening..." ||
-        document.getElementById("live-transcript").textContent === "") {
-      document.getElementById("live-transcript").textContent = "";
-      document.getElementById("mic-hint").textContent = "Hold to speak";
-    }
-  }, 2000);
-}
-
-function stopRecording() {
-  isRecording = false;
-  document.getElementById("mic-btn").classList.remove("recording");
-  document.getElementById("mic-hint").textContent = "Hold to speak";
-}
-
-function sendStudentSpeech(text) {
-  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
-
-  document.getElementById("live-transcript").textContent = "";
-  addStudentMessage(text);
-
-  ws.send(JSON.stringify({ type: "student_speech", text }));
-}
-
-// ═══════════════════════════════════════════════
-// TEXT MODE
-// ═══════════════════════════════════════════════
-function setMode(mode) {
-  currentMode = mode;
-  document.getElementById("mode-voice").classList.toggle("active", mode === "voice");
-  document.getElementById("mode-text").classList.toggle("active", mode === "text");
-  document.getElementById("voice-mode").style.display = mode === "voice" ? "flex" : "none";
-  document.getElementById("text-mode").style.display = mode === "text" ? "flex" : "none";
-  if (mode === "text") document.getElementById("text-input").focus();
-}
-
-function sendText() {
-  const input = document.getElementById("text-input");
-  const text = input.value.trim();
-  if (!text) return;
-
-  addStudentMessage(text);
-  input.value = "";
-
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "student_speech", text }));
-  }
-}
-
-// ═══════════════════════════════════════════════
-// TTS (Text-to-Speech)
-// ═══════════════════════════════════════════════
-function speak(text) {
-  if (!synth) return;
-  synth.cancel();
-
-  // Clean text for TTS
-  const clean = text.replace(/[*_#`]/g, '').replace(/\n/g, ' ');
-
-  const utterance = new SpeechSynthesisUtterance(clean);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.9; // Slightly slower for learners
-  utterance.pitch = 1.0;
-
-  // Try to find a good English voice
-  const voices = synth.getVoices();
-  const enVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) ||
-                  voices.find(v => v.lang.startsWith('en-US')) ||
-                  voices.find(v => v.lang.startsWith('en'));
-  if (enVoice) utterance.voice = enVoice;
-
-  synth.speak(utterance);
-}
-
-// Pre-load voices
-if (synth) {
-  synth.getVoices();
-  synth.onvoiceschanged = () => synth.getVoices();
-}
-
-// ═══════════════════════════════════════════════
-// END SESSION
-// ═══════════════════════════════════════════════
-function endSession() {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    showTyping();
-    ws.send(JSON.stringify({ type: "end" }));
-  }
-}
-
-function showSummary(data) {
-  removeTyping();
-  document.getElementById("sum-turns").textContent = data.turns || turnCount;
-  document.getElementById("sum-topic").textContent = TOPICS.find(t => t.id === selectedTopic)?.icon || "💬";
-  document.getElementById("sum-feedback").textContent = data.summary || "Great practice session!";
-  document.getElementById("summary-modal").classList.add("show");
-}
-
-function closeSummary() {
-  document.getElementById("summary-modal").classList.remove("show");
-  document.getElementById("room").style.display = "none";
-  document.getElementById("lobby").style.display = "flex";
-  if (ws) ws.close();
-}
-
-// ═══════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════
 init();
 </script>
 </body>

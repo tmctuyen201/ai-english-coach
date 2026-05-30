@@ -5,7 +5,7 @@ Tests the room/conversation-room.html UI served by room/server.py
 import pytest
 from playwright.sync_api import sync_playwright, expect
 
-BASE_URL = "http://localhost:8089"
+BASE_URL = "http://localhost:8089/room"
 
 
 @pytest.fixture(scope="session")
@@ -66,11 +66,11 @@ def test_room_has_chat(page):
 
 def test_room_has_mic_button(page):
     _enter_room(page)
-    expect(page.locator(".mic-btn")).to_be_visible()
+    expect(page.locator(".mic")).to_be_visible()
 
 def test_room_has_end_button(page):
     _enter_room(page)
-    expect(page.locator(".end-btn")).to_be_visible()
+    expect(page.locator(".topbar-end")).to_be_visible()
 
 def test_room_has_mode_toggle(page):
     _enter_room(page)
@@ -120,7 +120,7 @@ def test_ai_responds_to_text(page):
 def test_end_shows_summary(page):
     _enter_room(page)
     page.wait_for_timeout(1500)
-    page.click(".end-btn")
+    page.click(".topbar-end")
     page.wait_for_timeout(4000)
     modal = page.locator("#summary-modal")
     classes = modal.get_attribute("class") or ""
@@ -129,7 +129,7 @@ def test_end_shows_summary(page):
 def test_summary_has_feedback(page):
     _enter_room(page)
     page.wait_for_timeout(1500)
-    page.click(".end-btn")
+    page.click(".topbar-end")
     page.wait_for_timeout(4000)
     feedback = page.locator("#sum-feedback")
     assert len(feedback.text_content() or "") > 0
@@ -137,7 +137,7 @@ def test_summary_has_feedback(page):
 def test_close_summary_returns_to_lobby(page):
     _enter_room(page)
     page.wait_for_timeout(1500)
-    page.click(".end-btn")
+    page.click(".topbar-end")
     page.wait_for_timeout(4000)
     page.click(".close-btn")
     page.wait_for_timeout(500)
@@ -148,7 +148,7 @@ def test_close_summary_returns_to_lobby(page):
 
 def test_back_leaves_room(page):
     _enter_room(page)
-    page.click(".back")
+    page.click(".topbar-back")
     page.wait_for_timeout(500)
     expect(page.locator("#lobby")).to_be_visible()
 

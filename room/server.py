@@ -176,11 +176,55 @@ async def call_llm(messages: list) -> str:
 # ---------------------------------------------------------------------------
 @app.get("/")
 async def index():
+    return FileResponse("landing.html")
+
+@app.get("/auth")
+async def auth_page():
+    return FileResponse("auth.html")
+
+@app.get("/room")
+async def room_page():
     return FileResponse("conversation-room.html")
+
+@app.get("/conversation-room.html")
+async def room_page_alias():
+    return FileResponse("conversation-room.html")
+
+@app.get("/landing.html")
+async def landing_alias():
+    return FileResponse("landing.html")
+
+@app.get("/auth.html")
+async def auth_alias():
+    return FileResponse("auth.html")
 
 @app.get("/health")
 async def health():
     return {"status": "healthy", "active_sessions": len(sessions)}
+
+# ---------------------------------------------------------------------------
+# Auth API (for login page)
+# ---------------------------------------------------------------------------
+otp_store: Dict[str, str] = {}
+
+@app.post("/api/v1/auth/phone/send-otp")
+async def send_otp(body: dict):
+    phone = body.get("phone", "")
+    if not phone:
+        return {"detail": "Phone required"}
+    otp = "123456"  # Demo: always use 123456
+    otp_store[phone] = otp
+    return {"message": "OTP sent", "phone": phone}
+
+@app.post("/api/v1/auth/phone/verify")
+async def verify_otp(body: dict):
+    phone = body.get("phone", "")
+    otp = body.get("otp", "")
+    stored = otp_store.get(phone)
+    if not stored or stored != otp:
+        return {"detail": "Invalid OTP"}
+    del otp_store[phone]
+    return {"access_token": f"demo-token-{phone}"}
 
 # ---------------------------------------------------------------------------
 # WebSocket — Conversation Room

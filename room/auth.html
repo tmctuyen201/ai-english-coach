@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — AI English Coach</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#09090b;--bg2:#111114;--bg3:#18181b;
+  --border:#27272a;--border2:#3f3f46;
+  --text:#fafafa;--text2:#a1a1aa;--text3:#71717a;
+  --accent:#6366f1;--accent2:#818cf8;
+  --green:#22c55e;--red:#ef4444;
+  --gradient:linear-gradient(135deg,#6366f1,#06b6d4);
+  --glow:0 0 60px rgba(99,102,241,0.15);
+  --radius:16px;--radius-sm:10px;
+}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex}
+
+/* Left panel */
+.left{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px;position:relative;overflow:hidden}
+.left::before{content:'';position:absolute;top:-200px;left:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(99,102,241,0.1) 0%,transparent 70%);pointer-events:none}
+.left::after{content:'';position:absolute;bottom:-200px;right:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(6,182,212,0.08) 0%,transparent 70%);pointer-events:none}
+
+.auth-container{width:100%;max-width:400px;position:relative;z-index:1}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text3);font-size:13px;margin-bottom:32px;transition:color 0.2s}
+.back-link:hover{color:var(--text)}
+.logo{font-size:20px;font-weight:700;margin-bottom:32px}
+.logo span{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;background:var(--bg3);border-radius:var(--radius-sm);padding:4px;margin-bottom:32px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;color:var(--text3);border:none;background:transparent}
+.tab.active{background:var(--bg2);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+
+/* Form */
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:8px}
+.form-group input{width:100%;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:15px;font-family:inherit;outline:none;transition:all 0.2s}
+.form-group input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,0.15)}
+.form-group input::placeholder{color:var(--text3)}
+
+.phone-input{display:flex;gap:8px}
+.phone-prefix{width:80px;padding:14px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:15px;text-align:center;font-family:inherit}
+.phone-input input{flex:1}
+
+.otp-inputs{display:flex;gap:8px;justify-content:center}
+.otp-inputs input{width:48px;height:56px;text-align:center;font-size:20px;font-weight:600;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;outline:none;transition:all 0.2s}
+.otp-inputs input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,0.15)}
+
+.btn{width:100%;padding:14px;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit}
+.btn-primary{background:var(--gradient);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(99,102,241,0.3)}
+.btn-primary:disabled{opacity:0.5;cursor:default;transform:none;box-shadow:none}
+
+.divider{display:flex;align-items:center;gap:16px;margin:24px 0;color:var(--text3);font-size:13px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.btn-social{width:100%;padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-social:hover{border-color:var(--border2);background:var(--bg2)}
+
+.resend{margin-top:16px;text-align:center;font-size:13px;color:var(--text3)}
+.resend a{color:var(--accent2);cursor:pointer}
+.resend a:hover{text-decoration:underline}
+
+.terms{margin-top:24px;text-align:center;font-size:12px;color:var(--text3);line-height:1.6}
+.terms a{color:var(--text2)}
+
+/* Status */
+.status{padding:12px 16px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:16px;display:none}
+.status.error{display:block;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--red)}
+.status.success{display:block;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green)}
+
+/* Right panel */
+.right{flex:1;background:var(--bg2);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px;position:relative;overflow:hidden;border-left:1px solid var(--border)}
+.right::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(99,102,241,0.06) 0%,transparent 70%);pointer-events:none}
+.right-content{position:relative;z-index:1;max-width:400px;text-align:center}
+.right-content h2{font-size:28px;font-weight:700;margin-bottom:12px}
+.right-content p{color:var(--text2);margin-bottom:32px;line-height:1.7}
+
+.testimonial{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:left;margin-bottom:16px}
+.testimonial .quote{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:12px;font-style:italic}
+.testimonial .author{display:flex;align-items:center;gap:10px}
+.testimonial .avatar{width:32px;height:32px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:14px}
+.testimonial .name{font-size:13px;font-weight:600}
+.testimonial .role{font-size:12px;color:var(--text3)}
+
+.features-list{text-align:left;margin-top:32px}
+.features-list li{font-size:14px;color:var(--text2);padding:8px 0;display:flex;align-items:center;gap:10px}
+.features-list li::before{content:'✓';color:var(--green);font-weight:700;font-size:16px}
+
+/* Steps */
+.step-content{display:none}
+.step-content.active{display:block}
+
+/* Responsive */
+@media(max-width:900px){
+  body{flex-direction:column}
+  .right{display:none}
+  .left{min-height:100vh}
+}
+</style>
+</head>
+<body>
+
+<!-- LEFT: Auth Form -->
+<div class="left">
+  <div class="auth-container">
+    <a href="landing.html" class="back-link">← Back to home</a>
+    <div class="logo">🗣️ <span>AI English Coach</span></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('signin')">Sign In</button>
+      <button class="tab" onclick="showTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- STEP 1: Phone Number -->
+    <div class="step-content active" id="step-phone">
+      <div class="status" id="phone-status"></div>
+
+      <div class="form-group">
+        <label>Phone number</label>
+        <div class="phone-input">
+          <input type="text" class="phone-prefix" value="+84" readonly>
+          <input type="tel" id="phone-input" placeholder="0902 xxx xxx" maxlength="11">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="send-otp-btn" onclick="sendOTP()">Send Verification Code</button>
+
+      <div class="divider">or continue with</div>
+
+      <button class="btn-social" onclick="alert('Coming soon!')">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="terms">
+        By continuing, you agree to our <a href="#">Terms of Service</a><br>and <a href="#">Privacy Policy</a>
+      </div>
+    </div>
+
+    <!-- STEP 2: OTP Verification -->
+    <div class="step-content" id="step-otp">
+      <div class="status" id="otp-status"></div>
+
+      <p style="font-size:14px;color:var(--text2);margin-bottom:24px;text-align:center">
+        Enter the 6-digit code sent to<br><strong id="phone-display" style="color:var(--text)">+84 902 xxx xxxx</strong>
+      </p>
+
+      <div class="otp-inputs">
+        <input type="text" maxlength="1" oninput="otpNext(this)" onkeydown="otpBack(event,this)">
+        <input type="text" maxlength="1" oninput="otpNext(this)" onkeydown="otpBack(event,this)">
+        <input type="text" maxlength="1" oninput="otpNext(this)" onkeydown="otpBack(event,this)">
+        <input type="text" maxlength="1" oninput="otpNext(this)" onkeydown="otpBack(event,this)">
+        <input type="text" maxlength="1" oninput="otpNext(this)" onkeydown="otpBack(event,this)">
+        <input type="text" maxlength="1" oninput="otpNext(this)" onkeydown="otpBack(event,this)">
+      </div>
+
+      <button class="btn btn-primary" id="verify-btn" onclick="verifyOTP()" style="margin-top:24px">Verify & Sign In</button>
+
+      <div class="resend">
+        Didn't receive the code? <a onclick="resendOTP()">Resend</a>
+        <span id="resend-timer"></span>
+      </div>
+    </div>
+
+    <!-- STEP 3: Profile Setup (Sign Up) -->
+    <div class="step-content" id="step-profile">
+      <div class="status" id="profile-status"></div>
+
+      <p style="font-size:14px;color:var(--text2);margin-bottom:24px;text-align:center">
+        Tell us about yourself so we can personalize your learning.
+      </p>
+
+      <div class="form-group">
+        <label>Your name</label>
+        <input type="text" id="name-input" placeholder="What should we call you?">
+      </div>
+
+      <div class="form-group">
+        <label>I'm learning English for</label>
+        <select id="goal-select" style="width:100%;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:15px;font-family:inherit;outline:none">
+          <option value="school">📚 Better grades at school</option>
+          <option value="ielts">🎯 IELTS / TOEIC preparation</option>
+          <option value="communication">💬 Everyday communication</option>
+          <option value="work">💼 Career / Job interviews</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" onclick="completeSignup()">Start Learning →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT: Social Proof -->
+<div class="right">
+  <div class="right-content">
+    <h2>Speak English <span style="background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Confidently</span></h2>
+    <p>Join thousands of Vietnamese students improving their English with AI.</p>
+
+    <div class="testimonial">
+      <div class="quote">"I was so scared to speak English in class. After 2 weeks with AI English Coach, I raised my hand and answered a question in English for the first time!"</div>
+      <div class="author">
+        <div class="avatar">👧</div>
+        <div><div class="name">Minh Anh</div><div class="role">Grade 10, Ho Chi Minh City</div></div>
+      </div>
+    </div>
+
+    <div class="testimonial">
+      <div class="quote">"My son's English score went from 6.5 to 8.0 in just 2 months. The weekly reports help me track his progress."</div>
+      <div class="author">
+        <div class="avatar">👩</div>
+        <div><div class="name">Chị Lan</div><div class="role">Parent, Hanoi</div></div>
+      </div>
+    </div>
+
+    <ul class="features-list">
+      <li>Practice speaking 24/7 with AI teacher</li>
+      <li>Real-time grammar & pronunciation feedback</li>
+      <li>50+ conversation topics</li>
+      <li>Progress tracking & parent reports</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+let currentTab = 'signin';
+let phoneNumber = '';
+
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  // Reset to phone step
+  showStep('phone');
+}
+
+function showStep(step) {
+  document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + step).classList.add('active');
+}
+
+function sendOTP() {
+  const phone = document.getElementById('phone-input').value.trim();
+  if (!phone || phone.length < 9) {
+    showStatus('phone-status', 'Please enter a valid phone number', 'error');
+    return;
+  }
+
+  phoneNumber = phone;
+  document.getElementById('phone-display').textContent = '+84 ' + phone.substring(1);
+  document.getElementById('send-otp-btn').disabled = true;
+  document.getElementById('send-otp-btn').textContent = 'Sending...';
+
+  // Call API
+  fetch('/api/v1/auth/phone/send-otp', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: phone})
+  })
+  .then(r => r.json())
+  .then(data => {
+    showStep('otp');
+    showStatus('otp-status', 'Code sent! (For demo: use 123456)', 'success');
+    startResendTimer();
+    document.querySelector('.otp-inputs input').focus();
+  })
+  .catch(err => {
+    showStatus('phone-status', 'Failed to send code. Try again.', 'error');
+  })
+  .finally(() => {
+    document.getElementById('send-otp-btn').disabled = false;
+    document.getElementById('send-otp-btn').textContent = 'Send Verification Code';
+  });
+}
+
+function verifyOTP() {
+  const inputs = document.querySelectorAll('.otp-inputs input');
+  const otp = Array.from(inputs).map(i => i.value).join('');
+
+  if (otp.length < 6) {
+    showStatus('otp-status', 'Please enter the full 6-digit code', 'error');
+    return;
+  }
+
+  document.getElementById('verify-btn').disabled = true;
+  document.getElementById('verify-btn').textContent = 'Verifying...';
+
+  fetch('/api/v1/auth/phone/verify', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: phoneNumber, otp: otp})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.access_token) {
+      localStorage.setItem('token', data.access_token);
+      if (currentTab === 'signup') {
+        showStep('profile');
+      } else {
+        window.location.href = '/conversation-room.html';
+      }
+    } else {
+      showStatus('otp-status', 'Invalid code. Try again.', 'error');
+    }
+  })
+  .catch(err => {
+    showStatus('otp-status', 'Verification failed. Try again.', 'error');
+  })
+  .finally(() => {
+    document.getElementById('verify-btn').disabled = false;
+    document.getElementById('verify-btn').textContent = 'Verify & Sign In';
+  });
+}
+
+function completeSignup() {
+  const name = document.getElementById('name-input').value.trim();
+  if (!name) {
+    showStatus('profile-status', 'Please enter your name', 'error');
+    return;
+  }
+  localStorage.setItem('user_name', name);
+  window.location.href = '/conversation-room.html';
+}
+
+function resendOTP() {
+  sendOTP();
+}
+
+function startResendTimer() {
+  let s = 60;
+  const el = document.getElementById('resend-timer');
+  const iv = setInterval(() => {
+    s--;
+    el.textContent = ` (${s}s)`;
+    if (s <= 0) { clearInterval(iv); el.textContent = ''; }
+  }, 1000);
+}
+
+function otpNext(input) {
+  if (input.value.length === 1) {
+    const next = input.nextElementSibling;
+    if (next) next.focus();
+  }
+}
+
+function otpBack(e, input) {
+  if (e.key === 'Backspace' && !input.value) {
+    const prev = input.previousElementSibling;
+    if (prev) { prev.focus(); prev.value = ''; }
+  }
+}
+
+function showStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status ' + type;
+}
+
+// Auto-fill name from localStorage
+const savedName = localStorage.getItem('user_name');
+if (savedName) document.getElementById('name-input').value = savedName;
+</script>
+</body>
+</html>
