@@ -1,9 +1,9 @@
 # AI English Coach — Product Requirements Document (PRD)
 
 > **Project Code:** AI20K-033
-> **Version:** 1.0.0
+> **Version:** 2.0.0
 > **Last Updated:** 2026-05-30
-> **Status:** Brainstorming Phase
+> **Status:** In Development — Voice Room MVP Live
 
 ---
 
@@ -440,6 +440,155 @@ Democratize English speaking practice for 20M+ Vietnamese students who currently
 ---
 
 ## 5. Feature Specifications
+
+### 5.0 Live Voice Room — 1v1 Conversation (IMPLEMENTED ✅)
+
+> **Status:** MVP Live — Running on port 8089
+> **Location:** `room/server.py` + `room/conversation-room.html`
+
+The **Live Voice Room** is the core experience of AI English Coach. It's a real-time 1-on-1 voice conversation room where a student talks with an AI teacher, like a private tutoring session.
+
+#### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    LIVE VOICE ROOM — USER FLOW                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  STEP 1: LOBBY                                                          │
+│  ├── Student enters their name                                          │
+│  ├── Picks a conversation topic (5 available)                           │
+│  │   ├── 💬 Free Chat (A2) — Talk about anything                       │
+│  │   ├── 🍜 Ordering Food (A2) — Restaurant scenario                   │
+│  │   ├── 👋 Meeting People (A1) — Basic introductions                  │
+│  │   ├── 🎯 IELTS Part 1 (B1-B2) — Exam practice                      │
+│  │   └── 💼 Job Interview (B1) — Professional scenario                 │
+│  └── Clicks "Start Conversation"                                        │
+│                                                                          │
+│  STEP 2: VOICE ROOM                                                     │
+│  ├── AI teacher greets student (text + voice)                           │
+│  ├── Student holds mic button and speaks                                │
+│  │   ├── Browser Web Speech API transcribes in REAL-TIME               │
+│  │   ├── Live transcript shown on screen as student speaks             │
+│  │   └── When student releases button → transcript sent to server      │
+│  ├── Server sends transcript to LLM (OpenRouter GPT-4o-mini)           │
+│  ├── LLM generates contextual response (1-3 sentences)                 │
+│  ├── Response sent back to client                                       │
+│  ├── Browser Speech Synthesis speaks the response                       │
+│  └── Cycle repeats — back and forth like real conversation             │
+│                                                                          │
+│  STEP 3: END SESSION                                                    │
+│  ├── Student clicks "End Session"                                       │
+│  ├── AI generates conversation summary + feedback                      │
+│  └── Summary modal shows turns count + AI feedback                     │
+│                                                                          │
+│  KEY DESIGN DECISIONS:                                                   │
+│  ├── ASR runs IN BROWSER (Web Speech API) → zero latency              │
+│  ├── TTS runs IN BROWSER (Speech Synthesis) → zero latency            │
+│  ├── Only 1 network call per turn (LLM response) → ~1-2s latency     │
+│  ├── WebSocket for persistent connection → no HTTP overhead            │
+│  ├── Hold-to-talk pattern → natural turn-taking                        │
+│  └── AI speaks first → sets the tone, student responds                │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Technical Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    VOICE ROOM ARCHITECTURE                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  STUDENT'S BROWSER                                                       │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │    │
+│  │  │  Web Speech   │    │  WebSocket    │    │  Speech       │      │    │
+│  │  │  API (ASR)    │    │  Client       │    │  Synthesis    │      │    │
+│  │  │              │    │              │    │  (TTS)        │      │    │
+│  │  │  Student      │    │  Send text    │    │              │      │    │
+│  │  │  speaks →     │    │  Receive AI   │    │  AI response  │      │    │
+│  │  │  text         │    │  response     │    │  → spoken     │      │    │
+│  │  └──────┬───────┘    └──────┬───────┘    └──────────────┘      │    │
+│  │         │                    │                                    │    │
+│  │         └────────────────────┘                                    │    │
+│  │                    │                                               │    │
+│  └────────────────────┼───────────────────────────────────────────────┘    │
+│                       │ WebSocket                                         │
+│                       ▼                                                    │
+│  SERVER (FastAPI)                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │  ┌──────────────┐    ┌──────────────┐                           │    │
+│  │  │  Session       │    │  OpenRouter   │                           │    │
+│  │  │  Manager       │    │  LLM API      │                           │    │
+│  │  │              │    │              │                           │    │
+│  │  │  • Topic       │    │  • GPT-4o-mini│                           │    │
+│  │  │  • History     │    │  • System      │                           │    │
+│  │  │  • Turn count  │    │    prompt      │                           │    │
+│  │  │              │    │  • Context      │                           │    │
+│  │  └──────────────┘    └──────────────┘                           │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  LATENCY BREAKDOWN:                                                      │
+│  ├── ASR: 0ms (browser-native, instant)                                │
+│  ├── Network (send): ~50ms                                              │
+│  ├── LLM: ~1,000-2,000ms (the only real delay)                         │
+│  ├── Network (receive): ~50ms                                           │
+│  ├── TTS: 0ms (browser-native, instant)                                │
+│  └── TOTAL: ~1,100-2,100ms per turn                                    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Conversation Topics (5 Topics — MVP)
+
+| Topic | Level | Scenario | AI Role |
+|-------|-------|----------|---------|
+| 💬 Free Chat | A2 | Talk about anything | Friendly conversation partner |
+| 🍜 Ordering Food | A2 | Ordering at a restaurant | Waiter at Pho 24 |
+| 👋 Meeting People | A1 | Meeting new classmates | New classmate at school event |
+| 🎯 IELTS Part 1 | B1-B2 | IELTS speaking practice | IELTS examiner |
+| 💼 Job Interview | B1 | Interview for part-time job | HR manager |
+
+#### AI Teacher Behavior
+
+The AI teacher is configured with a system prompt that makes it:
+- **Friendly and patient** — never judges mistakes
+- **Brief** — 1-3 sentences per response (keeps conversation flowing)
+- **Natural corrector** — uses correct form in response instead of lecturing
+- **Encouraging** — celebrates small wins
+- **Contextual** — remembers conversation history
+- **Level-appropriate** — adjusts vocabulary to student's level
+
+#### Room Server API
+
+```
+WebSocket: ws://host:8089/ws/room/{session_id}
+
+Client → Server:
+  { type: "start", topic: "ordering-food", name: "Minh" }
+  { type: "student_speech", text: "I want to eat pho please" }
+  { type: "end" }
+
+Server → Client:
+  { type: "ai_greeting", text: "Good evening! Welcome to Pho 24..." }
+  { type: "ai_thinking" }
+  { type: "ai_response", text: "Great choice! Would you like beef or chicken?", turn: 3 }
+  { type: "session_summary", turns: 10, summary: "Great job! Your English..." }
+```
+
+#### Files
+
+| File | Purpose |
+|------|---------|
+| `room/server.py` | FastAPI WebSocket server with OpenRouter LLM integration |
+| `room/conversation-room.html` | Complete UI — lobby, voice room, summary modal |
+| `room/.env` | Environment config (OpenRouter API key) |
+
+---
 
 ### 5.1 Core Features (MVP — Phase 1)
 

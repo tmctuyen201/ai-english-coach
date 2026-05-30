@@ -1,6 +1,6 @@
 # AI English Coach — Feature Specifications (Detailed)
 
-> **Version:** 2.0.0 | **Last Updated:** 2026-05-30
+> **Version:** 2.0.0 | **Last Updated:** 2026-05-30 | **Status:** Voice Room MVP Live
 
 ---
 
@@ -56,7 +56,81 @@
 
 ---
 
-## 2. F1: Voice Conversation Engine
+## 2. Live Voice Room — 1v1 Conversation ✅ IMPLEMENTED
+
+> **Status:** MVP Live — `room/server.py` + `room/conversation-room.html`
+> **Port:** 8089 | **URL:** http://213.199.53.171:8089
+
+The **Live Voice Room** is the core product experience. A student enters a room and has a real-time voice conversation with an AI teacher — like a private English tutoring session.
+
+### User Flow
+
+```
+LOBBY                          VOICE ROOM                       SUMMARY
+┌─────────────┐               ┌─────────────────┐              ┌─────────────┐
+│ Enter name  │               │ AI: "Hello!     │              │ Turns: 10   │
+│ Pick topic  │ ──────────▶   │ Welcome to..."  │ ──────────▶  │ Feedback:   │
+│ Click Start │               │                 │              │ "Great job!"│
+└─────────────┘               │ 🎤 [Hold to     │              │             │
+                              │     speak]      │              │ [Back to    │
+                              │                 │              │  Lobby]     │
+                              │ Student: "I     │              └─────────────┘
+                              │ want pho..."    │
+                              │                 │
+                              │ AI: "Would you  │
+                              │ like beef or    │
+                              │ chicken?"       │
+                              └─────────────────┘
+```
+
+### Key Design Decisions
+
+| Decision | Why | Impact |
+|----------|-----|--------|
+| ASR in browser (Web Speech API) | Zero latency, no server cost | Instant transcript |
+| TTS in browser (Speech Synthesis) | Zero latency, no API cost | Instant AI speech |
+| Only 1 network call per turn (LLM) | Minimize latency | ~1-2s total per turn |
+| WebSocket connection | Persistent, no HTTP overhead | Smooth conversation |
+| Hold-to-talk button | Natural turn-taking UX | Like a walkie-talkie |
+| AI speaks first | Sets tone, student responds | Reduces anxiety |
+
+### Conversation Topics (MVP)
+
+| Topic | Level | Scenario | AI Role |
+|-------|-------|----------|---------|
+| 💬 Free Chat | A2 | Open conversation | Friendly partner |
+| 🍜 Ordering Food | A2 | Restaurant | Waiter at Pho 24 |
+| 👋 Meeting People | A1 | School event | New classmate |
+| 🎯 IELTS Part 1 | B1-B2 | IELTS exam | Examiner |
+| 💼 Job Interview | B1 | Interview | HR manager |
+
+### Server API
+
+```
+WebSocket: ws://host:8089/ws/room/{session_id}
+
+Client → Server:
+  { type: "start", topic: "ordering-food", name: "Minh" }
+  { type: "student_speech", text: "I want to eat pho" }
+  { type: "end" }
+
+Server → Client:
+  { type: "ai_greeting", text: "Welcome! ..." }
+  { type: "ai_thinking" }
+  { type: "ai_response", text: "Would you like beef?", turn: 3 }
+  { type: "session_summary", turns: 10, summary: "..." }
+```
+
+### Files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `room/server.py` | ~250 | FastAPI + WebSocket + OpenRouter LLM |
+| `room/conversation-room.html` | ~500 | Lobby + Voice Room + Summary UI |
+
+---
+
+## 3. F1: Voice Conversation Engine
 
 ### 2.1 What It Does
 

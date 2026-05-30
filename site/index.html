@@ -264,6 +264,8 @@
 
     <div class="section-title">How It Works</div>
     <a href="#user-journey">User Journey</a>
+    <div class="section-title">Core Product</div>
+    <a href="#voice-room" class="active">🎙️ Voice Room (Live!)</a>
     <a href="#conversation-engine">Conversation Engine</a>
     <a href="#asr">Speech-to-Text (ASR)</a>
     <a href="#llm">LLM Agent</a>
@@ -429,7 +431,67 @@
     </div>
 </div>
 
-<h2 id="conversation-engine">Conversation Engine (Core)</h2>
+<h2 id="voice-room">🎙️ Live Voice Room — 1v1 Conversation <span class="tag tag-green">LIVE</span></h2>
+
+<div class="callout callout-success">
+    <div class="callout-title">✅ MVP IMPLEMENTED — Running on port 8089</div>
+    <p><a href="http://213.199.53.171:8089" style="color:var(--accent-light)">http://213.199.53.171:8089</a> — Real-time voice conversation between student and AI teacher</p>
+</div>
+
+<div class="diagram">LOBBY                          VOICE ROOM                       SUMMARY
+┌─────────────┐               ┌─────────────────┐              ┌─────────────┐
+│ Enter name  │               │ AI: "Hello!     │              │ Turns: 10   │
+│ Pick topic  │ ──────────▶   │ Welcome to..."  │ ──────────▶  │ Feedback:   │
+│ Click Start │               │                 │              │ "Great job!"│
+└─────────────┘               │ 🎤 [Hold to     │              │             │
+                              │     speak]      │              │ [Back to    │
+                              │                 │              │  Lobby]     │
+                              │ Student: "I     │              └─────────────┘
+                              │ want pho..."    │
+                              │                 │
+                              │ AI: "Would you  │
+                              │ like beef or    │
+                              │ chicken?"       │
+                              └─────────────────┘</div>
+
+<h3>Key Design Decisions</h3>
+<table>
+    <tr><th>Decision</th><th>Why</th><th>Impact</th></tr>
+    <tr><td>ASR in browser (Web Speech API)</td><td>Zero latency, no server cost</td><td>Instant transcript</td></tr>
+    <tr><td>TTS in browser (Speech Synthesis)</td><td>Zero latency, no API cost</td><td>Instant AI speech</td></tr>
+    <tr><td>Only 1 network call per turn (LLM)</td><td>Minimize latency</td><td>~1-2s total per turn</td></tr>
+    <tr><td>WebSocket connection</td><td>Persistent, no HTTP overhead</td><td>Smooth conversation</td></tr>
+    <tr><td>Hold-to-talk button</td><td>Natural turn-taking UX</td><td>Like a walkie-talkie</td></tr>
+    <tr><td>AI speaks first</td><td>Sets tone, student responds</td><td>Reduces anxiety</td></tr>
+</table>
+
+<h3>Conversation Topics (MVP)</h3>
+<table>
+    <tr><th>Topic</th><th>Level</th><th>Scenario</th><th>AI Role</th></tr>
+    <tr><td>💬 Free Chat</td><td>A2</td><td>Open conversation</td><td>Friendly partner</td></tr>
+    <tr><td>🍜 Ordering Food</td><td>A2</td><td>Restaurant</td><td>Waiter at Pho 24</td></tr>
+    <tr><td>👋 Meeting People</td><td>A1</td><td>School event</td><td>New classmate</td></tr>
+    <tr><td>🎯 IELTS Part 1</td><td>B1-B2</td><td>IELTS exam</td><td>Examiner</td></tr>
+    <tr><td>💼 Job Interview</td><td>B1</td><td>Interview</td><td>HR manager</td></tr>
+</table>
+
+<h3>Server API</h3>
+<div class="card">
+<pre><code>WebSocket: ws://host:8089/ws/room/{session_id}
+
+Client → Server:
+  { "type": "start", "topic": "ordering-food", "name": "Minh" }
+  { "type": "student_speech", "text": "I want to eat pho" }
+  { "type": "end" }
+
+Server → Client:
+  { "type": "ai_greeting", "text": "Welcome! ..." }
+  { "type": "ai_thinking" }
+  { "type": "ai_response", "text": "Would you like beef?", "turn": 3 }
+  { "type": "session_summary", "turns": 10, "summary": "..." }</code></pre>
+</div>
+
+<h2 id="conversation-engine">Conversation Engine (Full Architecture)</h2>
 
 <p>This is the <strong>heart of the system</strong>. When a student speaks, here's exactly what happens:</p>
 
