@@ -1,916 +1,964 @@
-# AI English Coach — Feature Specifications
+# AI English Coach — Feature Specifications (Detailed)
 
-> **Version:** 1.0.0
-> **Last Updated:** 2026-05-30
+> **Version:** 2.0.0 | **Last Updated:** 2026-05-30
+
+---
+
+## Table of Contents
+
+1. [Feature Overview](#1-feature-overview)
+2. [F1: Voice Conversation Engine](#2-f1-voice-conversation-engine)
+3. [F2: Grammar Correction Engine](#3-f2-grammar-correction-engine)
+4. [F3: Pronunciation Scoring](#4-f3-pronunciation-scoring)
+5. [F4: Topic-Based Conversations](#5-f4-topic-based-conversations)
+6. [F5: Vocabulary Builder (Spaced Repetition)](#6-f5-vocabulary-builder-spaced-repetition)
+7. [F6: Parent Dashboard](#7-f6-parent-dashboard)
+8. [F7: Gamification System](#8-f7-gamification-system)
+9. [F8: AI Video Avatar (Phase 3)](#9-f8-ai-video-avatar-phase-3)
+10. [F9: IELTS Mock Speaking Test (Phase 3)](#10-f9-ielts-mock-speaking-test-phase-3)
+11. [F10: Homework Help (Phase 3)](#11-f10-homework-help-phase-3)
+12. [Screen-by-Screen Specifications](#12-screen-by-screen-specifications)
+13. [API Specifications](#13-api-specifications)
+14. [Error Handling](#14-error-handling)
+15. [Edge Cases](#15-edge-cases)
 
 ---
 
 ## 1. Feature Overview
 
-### 1.1 Feature Prioritization Matrix
+### 1.1 Feature Priority Matrix
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    FEATURE PRIORITIZATION                             │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  Impact ▲                                                            │
-│         │                                                            │
-│    High │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
-│         │  │  F1: Voice   │  │  F5: Vocab   │  │  F7: Avatar  │      │
-│         │  │  Conversation│  │  Builder     │  │  (Phase 3)   │      │
-│         │  │  (MVP)       │  │  (Phase 2)   │  │              │      │
-│         │  └─────────────┘  └─────────────┘  └─────────────┘      │
-│         │                                                            │
-│   Medium│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
-│         │  │  F2: Grammar │  │  F6: Parent  │  │  F8: IELTS   │      │
-│         │  │  Checker     │  │  Dashboard   │  │  Mock Test   │      │
-│         │  │  (MVP)       │  │  (Phase 2)   │  │  (Phase 3)   │      │
-│         │  └─────────────┘  └─────────────┘  └─────────────┘      │
-│         │                                                            │
-│     Low │  ┌─────────────┐  ┌─────────────┐                       │
-│         │  │  F3: Pronunc.│  │  F4: Topics  │                       │
-│         │  │  Scoring     │  │  System      │                       │
-│         │  │  (MVP)       │  │  (MVP)       │                       │
-│         │  └─────────────┘  └─────────────┘                       │
-│         │                                                            │
-│         └───────────────────────────────────────────────────▶      │
-│              Low              Medium            High                 │
-│                                  Effort                               │
-│                                                                      │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │  Phase 1 (MVP):    F1, F2, F3, F4                           │   │
-│  │  Phase 2 (Growth): F5, F6, Payment, Mobile App              │   │
-│  │  Phase 3 (Scale):  F7, F8, F9, School License               │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### 1.2 Feature Dependencies
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    FEATURE DEPENDENCY GRAPH                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────┐                                                       │
-│  │  Auth     │                                                       │
-│  │  (Phone   │                                                       │
-│  │   OTP)    │                                                       │
-│  └────┬─────┘                                                       │
-│       │                                                              │
-│       ▼                                                              │
-│  ┌──────────┐     ┌──────────┐     ┌──────────┐                    │
-│  │  F1:      │────▶│  F2:      │────▶│  F5:      │                    │
-│  │  Voice    │     │  Grammar  │     │  Vocab    │                    │
-│  │  Conv.    │     │  Checker  │     │  Builder  │                    │
-│  └────┬─────┘     └────┬─────┘     └──────────┘                    │
-│       │                │                                             │
-│       ▼                ▼                                             │
-│  ┌──────────┐     ┌──────────┐                                      │
-│  │  F3:      │     │  F6:      │                                      │
-│  │  Pronunc. │     │  Parent   │                                      │
-│  │  Scoring  │     │  Dashboard│                                      │
-│  └──────────┘     └──────────┘                                      │
-│                                                                      │
-│  ┌──────────┐                                                       │
-│  │  F4:      │ (independent, can be built in parallel)              │
-│  │  Topics   │                                                       │
-│  └──────────┘                                                       │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    FEATURE PRIORITY MATRIX                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  PHASE 1 — MVP (Weeks 1-6):                                             │
+│  ├── F1: Voice Conversation Engine      ← CORE, must have              │
+│  ├── F2: Grammar Correction Engine      ← CORE, must have              │
+│  ├── F3: Pronunciation Scoring          ← CORE, must have              │
+│  └── F4: Topic-Based Conversations      ← CORE, must have              │
+│                                                                          │
+│  PHASE 2 — Growth (Weeks 7-12):                                         │
+│  ├── F5: Vocabulary Builder              ← HIGH value, drives retention │
+│  ├── F6: Parent Dashboard               ← HIGH value, drives revenue   │
+│  ├── F7: Gamification System            ← MEDIUM value, drives engagement│
+│  └── Payment Integration (VNPay/MoMo)   ← REQUIRED for revenue         │
+│                                                                          │
+│  PHASE 3 — Scale (Weeks 13-24):                                         │
+│  ├── F8: AI Video Avatar                ← HIGH value, premium feature  │
+│  ├── F9: IELTS Mock Speaking Test       ← HIGH value, premium feature  │
+│  ├── F10: Homework Help                 ← MEDIUM value, engagement     │
+│  └── School License                     ← HIGH value, B2B revenue      │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Feature F1: Voice Conversation Engine
+## 2. F1: Voice Conversation Engine
 
-### 2.1 Description
+### 2.1 What It Does
 
-Real-time voice conversation with an AI English tutor that adapts to the student's level, provides natural dialogue, and gives immediate feedback on grammar and pronunciation.
+The voice conversation engine is the **core feature** of the entire app. It allows students to have a natural English conversation with an AI tutor that:
+- Listens to the student speak
+- Understands what they said (speech-to-text)
+- Responds naturally like a real person
+- Speaks the response back (text-to-speech)
+- Gives real-time feedback on grammar and pronunciation
 
-### 2.2 User Stories
-
-| ID | User Story | Priority | Acceptance Criteria |
-|----|-----------|----------|---------------------|
-| F1.1 | As a student, I want to start a conversation by selecting a topic | P0 | Topic list loads < 2s, selection starts conversation |
-| F1.2 | As a student, I want to speak and have the AI understand me | P0 | ASR accuracy > 90% for VN-accented English |
-| F1.3 | As a student, I want the AI to respond naturally like a real person | P0 | Response latency < 3s, natural dialogue flow |
-| F1.4 | As a student, I want to see what I said (transcript) | P1 | Transcript appears within 1s of speech end |
-| F1.5 | As a student, I want to type instead of speak (fallback) | P1 | Text input works same as voice |
-| F1.6 | As a student, I want the AI to adjust difficulty to my level | P1 | AI adapts vocabulary/grammar to student's CEFR level |
-| F1.7 | As a student, I want to pause and resume conversation | P2 | Conversation state preserved for 30 min |
-
-### 2.3 Conversation Flow
+### 2.2 Screen: Conversation Page
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│  CONVERSATION FLOW DIAGRAM                                           │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────────┐                                                   │
-│  │  SELECT       │                                                   │
-│  │  TOPIC        │                                                   │
-│  └──────┬───────┘                                                   │
-│         │                                                            │
-│         ▼                                                            │
-│  ┌──────────────┐     ┌──────────────┐                              │
-│  │  AI INTRO     │────▶│  LISTEN TO    │                              │
-│  │  (TTS plays)  │     │  STUDENT      │                              │
-│  └──────────────┘     └──────┬───────┘                              │
-│                               │                                      │
-│                               ▼                                      │
-│                        ┌──────────────┐                              │
-│                        │  PROCESS      │                              │
-│                        │  (ASR + NLP)  │                              │
-│                        └──────┬───────┘                              │
-│                               │                                      │
-│              ┌────────────────┼────────────────┐                    │
-│              ▼                ▼                ▼                    │
-│       ┌──────────┐    ┌──────────┐    ┌──────────┐                 │
-│       │  Grammar  │    │  Generate │    │  Pronunc.│                 │
-│       │  Check    │    │  Response │    │  Score   │                 │
-│       └────┬─────┘    └────┬─────┘    └────┬─────┘                 │
-│            │               │               │                        │
-│            └───────────────┼───────────────┘                        │
-│                            ▼                                         │
-│                     ┌──────────────┐                                 │
-│                     │  SHOW         │                                 │
-│                     │  FEEDBACK     │                                 │
-│                     │  + AI REPLY   │                                 │
-│                     └──────┬───────┘                                 │
-│                            │                                         │
-│              ┌─────────────┼─────────────┐                          │
-│              ▼                           ▼                          │
-│       ┌──────────┐               ┌──────────┐                      │
-│       │  Continue │               │  End     │                      │
-│       │  (loop)   │               │  Session │                      │
-│       └──────────┘               └──────┬───┘                      │
-│                                         │                           │
-│                                         ▼                           │
-│                                  ┌──────────────┐                   │
-│                                  │  SUMMARY      │                   │
-│                                  │  REPORT       │                   │
-│                                  └──────────────┘                   │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│  CONVERSATION PAGE — Mobile View (390 × 844)                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  HEADER BAR                                                      │    │
+│  │  ┌───┐                                        ┌───┐ ┌───┐      │    │
+│  │  │ ← │  Ordering Food at a Restaurant         │ ⏸️ │ │ ✕ │      │    │
+│  │  └───┘  Level: A2  │  Turn 5/12  │  3:45      └───┘ └───┘      │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  CHAT AREA (scrollable)                                          │    │
+│  │                                                                  │    │
+│  │  ┌─────────────────────────────────────────────────────────┐    │    │
+│  │  │  🤖 AI (Waiter)                                          │    │    │
+│  │  │  "Good evening! Welcome to Pho 24. Have you decided     │    │    │
+│  │  │  what you'd like to order?"                              │    │    │
+│  │  │                                          🔊 [Play]       │    │    │
+│  │  └─────────────────────────────────────────────────────────┘    │    │
+│  │                                                                  │    │
+│  │  ┌─────────────────────────────────────────────────────────┐    │    │
+│  │  │  👤 You                                                  │    │    │
+│  │  │  "I want to eat pho please"                              │    │    │
+│  │  │                                                          │    │    │
+│  │  │  ┌─ Grammar ────────────────────────────────────────┐   │    │    │
+│  │  │  │  ✏️ "I want to eat pho please"                    │   │    │    │
+│  │  │  │  → "I'd like to have pho, please"                │   │    │    │
+│  │  │  │  💡 Dùng "I'd like" cho lịch sự hơn              │   │    │    │
+│  │  │  │  Score: 65/100                                    │   │    │    │
+│  │  │  └──────────────────────────────────────────────────┘   │    │    │
+│  │  │                                                          │    │    │
+│  │  │  ┌─ Pronunciation ──────────────────────────────────┐   │    │    │
+│  │  │  │  I    want   to   eat   pho   please              │   │    │    │
+│  │  │  │  95%  85%   90%  90%  88%  58%                   │   │    │    │
+│  │  │  │  ✅   ✅    ✅   ✅   ✅   ⚠️                     │   │    │    │
+│  │  │  │                                                  │   │    │    │
+│  │  │  │  Tip: "please" — Âm /z/ cuối cần rung dây thanh │   │    │    │
+│  │  │  └──────────────────────────────────────────────────┘   │    │    │
+│  │  └─────────────────────────────────────────────────────────┘    │    │
+│  │                                                                  │    │
+│  │  ┌─────────────────────────────────────────────────────────┐    │    │
+│  │  │  🤖 AI (Waiter)                                          │    │    │
+│  │  │  "Great choice! Would you like beef pho or chicken?"     │    │    │
+│  │  │                                          🔊 [Play]       │    │    │
+│  │  └─────────────────────────────────────────────────────────┘    │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  INPUT BAR (fixed at bottom)                                     │    │
+│  │                                                                  │    │
+│  │  ┌─────────────────────────────────────────┐  ┌────┐ ┌────┐   │    │
+│  │  │  [Type a message...]                    │  │ 🎤 │ │ ⌨️ │   │    │
+│  │  └─────────────────────────────────────────┘  └────┘ └────┘   │    │
+│  │                                                                  │    │
+│  │  [When holding mic button:]                                      │    │
+│  │  ┌─────────────────────────────────────────────────────────┐    │    │
+│  │  │        🔴 Recording... (waveform animation)              │    │    │
+│  │  │        ╱╲ ╱╲ ╱╲ ╱╲ ╱╲ ╱╲ ╱╲ ╱╲                        │    │    │
+│  │  │  [Release to send]                    [Slide to cancel]  │    │    │
+│  │  └─────────────────────────────────────────────────────────┘    │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  PROGRESS BAR (bottom)                                           │    │
+│  │  ████████████░░░░░░░░ 5/12 turns                                 │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.4 Technical Specifications
+### 2.3 Voice Recording Interaction
 
-| Spec | Requirement | Measurement |
-|------|-------------|-------------|
-| Audio Input | 16kHz, mono, WebM/Opus | WebRTC |
-| ASR Latency | < 500ms (partial), < 1.5s (final) | Deepgram/Whisper |
-| LLM Response | < 1.5s text generation | GPT-4o-mini |
-| TTS Output | < 800ms audio generation | OpenAI TTS |
-| E2E Latency | < 3s from speech end to AI audio | End-to-end |
-| Concurrent Sessions | 1,000+ per instance | Load test |
-| Session Duration | 5-30 min (configurable) | Timer |
-| Audio Quality | Clear, natural, appropriate speed | User feedback |
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    VOICE RECORDING INTERACTION                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  STATE 1: IDLE                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │  ┌─────────────────────────────────────────────────────────┐    │    │
+│  │  │                                                          │    │    │
+│  │  │                    ┌─────────┐                           │    │    │
+│  │  │                    │   🎤    │  ← Large mic button       │    │    │
+│  │  │                    │  Hold   │     (80px, centered)      │    │    │
+│  │  │                    │ to Talk │                           │    │    │
+│  │  │                    └─────────┘                           │    │    │
+│  │  │                                                          │    │    │
+│  │  └─────────────────────────────────────────────────────────┘    │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  STATE 2: RECORDING (user holds button)                                 │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │  ┌─────────────────────────────────────────────────────────┐    │    │
+│  │  │  ┌─────────────────────────────────────────────────┐    │    │    │
+│  │  │  │              🔴 Recording...                      │    │    │    │
+│  │  │  │              ╱╲ ╱╲ ╱╲ ╱╲ ╱╲ ╱╲                  │    │    │    │
+│  │  │  │             ╱  ╲╱  ╲╱  ╲╱  ╲╱  ╲                 │    │    │    │
+│  │  │  │            (waveform animation)                   │    │    │    │
+│  │  │  └─────────────────────────────────────────────────┘    │    │    │
+│  │  │                                                          │    │    │
+│  │  │  ┌─────────┐                                             │    │    │
+│  │  │  │   🔴    │  ← Button turns red, pulses                │    │    │
+│  │  │  │Release  │                                             │    │    │
+│  │  │  │to Send  │                                             │    │    │
+│  │  │  └─────────┘                                             │    │    │
+│  │  │                                                          │    │    │
+│  │  │  ← Slide left to cancel →                               │    │    │
+│  │  └─────────────────────────────────────────────────────────┘    │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  STATE 3: PROCESSING (after release)                                    │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │  ┌─────────────────────────────────────────────────────────┐    │    │
+│  │  │                                                          │    │    │
+│  │  │                    ┌─────────┐                           │    │    │
+│  │  │                    │   ⏳    │  ← Loading spinner        │    │    │
+│  │  │                    │Listening│                           │    │    │
+│  │  │                    └─────────┘                           │    │    │
+│  │  │                                                          │    │    │
+│  │  └─────────────────────────────────────────────────────────┘    │    │
+│  │                                                                  │    │
+│  │  Shows partial transcript as ASR processes:                     │    │
+│  │  "I want to eat..."                                              │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  STATE 4: AI RESPONDING                                                 │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │  ┌─────────────────────────────────────────────────────────┐    │    │
+│  │  │  🤖 AI is typing...                                       │    │    │
+│  │  │  ┌─────────────────────────────────────────────────┐    │    │    │
+│  │  │  │  ● ● ●  (typing indicator dots)                 │    │    │    │
+│  │  │  └─────────────────────────────────────────────────┘    │    │    │
+│  │  └─────────────────────────────────────────────────────────┘    │    │
+│  │                                                                  │    │
+│  │  AI audio plays automatically through speaker                    │    │
+│  │  Student can tap 🔊 to replay                                   │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
-### 2.5 Voice Configuration
+### 2.4 Conversation Flow Logic
 
 ```python
-VOICE_PRESETS = {
-    "friendly_female": {
-        "provider": "openai",
-        "voice_id": "nova",           # Warm, friendly
-        "speed": 0.9,                  # Slightly slower for learners
-        "stability": 0.65,
-        "description": "Giọng nữ thân thiện, phù hợp mọi lứa tuổi"
-    },
-    "friendly_male": {
-        "provider": "openai",
-        "voice_id": "echo",           # Clear, friendly
-        "speed": 0.9,
-        "stability": 0.65,
-        "description": "Giọng nam thân thiện, rõ ràng"
-    },
-    "professional_female": {
-        "provider": "openai",
-        "voice_id": "shimmer",        # Professional
-        "speed": 1.0,
-        "stability": 0.70,
-        "description": "Giọng nữ chuyên nghiệp, phù hợp luyện IELTS"
-    },
-    "young_energetic": {
-        "provider": "openai",
-        "voice_id": "alloy",          # Young, energetic
-        "speed": 0.95,
-        "stability": 0.60,
-        "description": "Giọng trẻ trung, phù hợp học sinh cấp 2"
-    }
-}
+# Conversation flow pseudocode
+async def handle_conversation_turn(session_id: str, audio_data: bytes):
+    """
+    Complete flow for one conversation turn.
+    Called when student finishes speaking.
+    """
 
-# Speed options
-SPEED_OPTIONS = {
-    "slow": 0.75,       # Beginner (A1-A2)
-    "normal": 0.9,      # Intermediate (B1)
-    "natural": 1.0,     # Advanced (B2+)
-}
+    # STEP 1: Speech-to-Text
+    transcript = await asr_service.transcribe(audio_data)
+    # → "I want to eat pho please"
+
+    # Send partial transcript to client immediately
+    await ws.send({"type": "transcript_partial", "text": transcript})
+
+    # STEP 2: Parallel processing (all three run simultaneously)
+    grammar_task = asyncio.create_task(grammar_service.check(transcript))
+    llm_task = asyncio.create_task(llm_service.generate_response(transcript, session_id))
+    pron_task = asyncio.create_task(pron_service.score(audio_data, transcript))
+
+    # Wait for all three to complete
+    grammar_result, llm_result, pron_result = await asyncio.gather(
+        grammar_task, llm_task, pron_task
+    )
+
+    # STEP 3: Generate TTS for AI response
+    audio_url = await tts_service.synthesize(llm_result.text)
+
+    # STEP 4: Send all results to client
+    await ws.send({"type": "transcript_final", "text": transcript})
+    await ws.send({"type": "feedback", "grammar": grammar_result, "pronunciation": pron_result})
+    await ws.send({"type": "ai_response", "text": llm_result.text, "audio_url": audio_url})
+
+    # STEP 5: Save to database
+    await db.save_turn(session_id, transcript, llm_result.text, grammar_result, pron_result)
+
+    # STEP 6: Extract new vocabulary
+    new_words = await vocab_service.extract(transcript, llm_result.text, user_id)
+    if new_words:
+        await ws.send({"type": "new_vocabulary", "words": new_words})
 ```
-
-### 2.6 Error Handling
-
-| Error | Handling | User Message (Vietnamese) |
-|-------|----------|--------------------------|
-| ASR timeout | Retry once, then prompt text input | "Không nghe rõ, bạn có thể nói lại hoặc gõ text" |
-| ASR low confidence | Show transcript, ask for confirmation | "Bạn có nói '...' không?" |
-| LLM timeout | Retry with simpler prompt | "AI đang suy nghĩ, chờ một chút..." |
-| LLM error | Fallback to pre-written response | "Có lỗi xảy ra, thử lại nhé" |
-| TTS error | Show text only | (Silent, show text) |
-| Network disconnect | Save state, offer reconnect | "Mất kết nối, bạn có muốn tiếp tục?" |
-| Audio permission denied | Prompt to enable mic | "Cho phép microphone để luyện nói nhé" |
 
 ---
 
-## 3. Feature F2: Grammar Correction Engine
+## 3. F2: Grammar Correction Engine
 
-### 3.1 Description
+### 3.1 What It Does
 
-Real-time grammar checking that identifies errors, provides corrections, and explains mistakes in Vietnamese with level-appropriate detail.
+Checks every student utterance for grammar errors and provides:
+1. The corrected version of their sentence
+2. Specific error highlighting (which word/phrase is wrong)
+3. Vietnamese explanation of the grammar rule
+4. An overall grammar score (0-100)
 
-### 3.2 Grammar Error Categories
+### 3.2 Grammar Error Categories (Vietnamese Learners)
 
-```python
-GRAMMAR_CATEGORIES = {
-    "tense": {
-        "name_vi": "Thì",
-        "examples": [
-            {
-                "original": "I go to school yesterday",
-                "corrected": "I went to school yesterday",
-                "explanation_vi": "Dùng thì Quá khứ đơn (went) vì có 'yesterday' chỉ thời gian quá khứ",
-                "rule": "Past Simple: S + V2/V-ed + time marker (yesterday, last week, ago)"
-            },
-            {
-                "original": "I am liking English",
-                "corrected": "I like English",
-                "explanation_vi": "'Like' là động từ trạng thái, không dùng ở thì Continous",
-                "rule": "Stative verbs (like, love, know, want) don't use -ing"
-            }
-        ]
-    },
-    "article": {
-        "name_vi": "Mạo từ",
-        "examples": [
-            {
-                "original": "I want apple",
-                "corrected": "I want an apple",
-                "explanation_vi": "Cần mạo từ 'an' trước danh từ đếm được số ít bắt đầu bằng nguyên âm",
-                "rule": "a + consonant sound, an + vowel sound"
-            },
-            {
-                "original": "I like the music",
-                "corrected": "I like music",
-                "explanation_vi": "Không cần 'the' khi nói về music nói chung (general)",
-                "rule": "No article for general/uncountable nouns"
-            }
-        ]
-    },
-    "preposition": {
-        "name_vi": "Giới từ",
-        "examples": [
-            {
-                "original": "I go to school by Monday",
-                "corrected": "I go to school on Monday",
-                "explanation_vi": "Dùng 'on' với ngày trong tuần, không phải 'by'",
-                "rule": "on + days, in + months/seasons, at + times"
-            }
-        ]
-    },
-    "word_order": {
-        "name_vi": "Trật tự từ",
-        "examples": [
-            {
-                "original": "I very like English",
-                "corrected": "I like English very much",
-                "explanation_vi": "'Very' không đứng trước động từ. Dùng 'very much' sau động từ",
-                "rule": "Adverbs of degree (very, really) modify adjectives, not verbs directly"
-            }
-        ]
-    },
-    "subject_verb_agreement": {
-        "name_vi": "Sự hòa hợp chủ ngữ - động từ",
-        "examples": [
-            {
-                "original": "He don't like it",
-                "corrected": "He doesn't like it",
-                "explanation_vi": "He/She/It đi với 'doesn't', không phải 'don't'",
-                "rule": "He/She/It + doesn't + V原形"
-            }
-        ]
-    },
-    "vocabulary": {
-        "name_vi": "Từ vựng",
-        "examples": [
-            {
-                "original": "I want to eat pho please",
-                "corrected": "I'd like to have pho, please",
-                "explanation_vi": "Dùng 'I'd like' thay vì 'I want' cho lịch sự hơn",
-                "rule": "Use 'I'd like' for polite requests"
-            }
-        ]
-    },
-    "pronunciation_spelling": {
-        "name_vi": "Phát âm chính tả",
-        "examples": [
-            {
-                "original": "I am very happpy",
-                "corrected": "I am very happy",
-                "explanation_vi": "'Happy' chỉ có 1 chữ p",
-                "rule": "Common spelling: happy, happen, apple (1 p)"
-            }
-        ]
-    }
-}
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    GRAMMAR ERROR CATEGORIES                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  CATEGORY 1: TENSE ERRORS (Most common for VN learners)                │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Example: "I go to school yesterday"                            │    │
+│  │  Correction: "I went to school yesterday"                       │    │
+│  │  Error: Present tense used instead of Past tense                │    │
+│  │  Explanation_vi: "Dùng thì Quá khứ đơn (went) vì có            │    │
+│  │  'yesterday' chỉ thời gian quá khứ.                            │    │
+│  │  Quy tắc: S + V2/V-ed + time marker (yesterday, last week)"   │    │
+│  │  Rule: Past Simple for completed actions in the past            │    │
+│  │  Practice: "I _____ (eat) pho yesterday" → "ate"               │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  CATEGORY 2: ARTICLE ERRORS                                              │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Example: "I want apple"                                        │    │
+│  │  Correction: "I want an apple"                                  │    │
+│  │  Error: Missing article before countable noun                   │    │
+│  │  Explanation_vi: "Cần mạo từ 'an' trước danh từ đếm được       │    │
+│  │  số ít bắt đầu bằng nguyên âm (a, e, i, o, u).                 │    │
+│  │  'apple' bắt đầu bằng /æ/ (nguyên âm) → dùng 'an'."          │    │
+│  │  Rule: a + consonant sound, an + vowel sound                   │    │
+│  │  Practice: "I want _____ orange" → "an"                        │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  CATEGORY 3: WORD ORDER                                                  │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Example: "I very like English"                                 │    │
+│  │  Correction: "I like English very much"                         │    │
+│  │  Error: Adverb placed before verb (Vietnamese word order)       │    │
+│  │  Explanation_vi: "'Very' không đứng trước động từ trong         │    │
+│  │  tiếng Anh. Dùng 'very much' SAU động từ.                      │    │
+│  │  Tiếng Việt: 'Tôi rất thích' → Anh: 'I like ... very much'." │    │
+│  │  Rule: Subject + Verb + Object + Adverb of degree              │    │
+│  │  Practice: "She _____ English _____" → "likes ... very much"   │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  CATEGORY 4: SUBJECT-VERB AGREEMENT                                      │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Example: "He don't like it"                                    │    │
+│  │  Correction: "He doesn't like it"                               │    │
+│  │  Error: Wrong auxiliary verb for 3rd person singular            │    │
+│  │  Explanation_vi: "He/She/It đi với 'doesn't', không phải       │    │
+│  │  'don't'. 'Don't' chỉ dùng với I/You/We/They.                 │    │
+│  │  Quy tắc: He/She/It + doesn't + V nguyên thể."               │    │
+│  │  Rule: 3rd person singular requires "doesn't"                  │    │
+│  │  Practice: "She _____ (not, like) coffee" → "doesn't like"     │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  CATEGORY 5: PREPOSITION ERRORS                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Example: "I go to school by Monday"                            │    │
+│  │  Correction: "I go to school on Monday"                         │    │
+│  │  Error: Wrong preposition for days                              │    │
+│  │  Explanation_vi: "Dùng 'on' với ngày trong tuần (Monday,       │    │
+│  │  Tuesday...), không phải 'by'.                                  │    │
+│  │  Quy tắc: on + ngày, in + tháng/mùa, at + giờ."              │    │
+│  │  Rule: on + days, in + months/seasons, at + times              │    │
+│  │  Practice: "I wake up _____ 7 AM" → "at"                       │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  CATEGORY 6: VOCABULARY/REGISTER                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Example: "I want to eat pho please"                            │    │
+│  │  Correction: "I'd like to have pho, please"                    │    │
+│  │  Error: Too direct/impolite for ordering food                   │    │
+│  │  Explanation_vi: "Dùng 'I'd like' thay vì 'I want' khi         │    │
+│  │  gọi món hoặc yêu cầu — lịch sự hơn.                          │    │
+│  │  Tương tự: 'Could I have...' cũng rất lịch sự."               │    │
+│  │  Rule: Use "I'd like" for polite requests                      │    │
+│  │  Practice: "_____ you help me?" → "Could"                      │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  CATEGORY 7: MISSING FINAL CONSONANTS (VN-specific)                     │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Example: "I wan to ea pho"                                     │    │
+│  │  Correction: "I want to eat pho"                                │    │
+│  │  Error: Final /t/ and /t/ dropped                               │    │
+│  │  Explanation_vi: "Tiếng Việt không có phụ âm cuối mạnh,         │    │
+│  │  nên người Việt hay bỏ âm cuối. Phải phát âm rõ:              │    │
+│  │  'wanT', 'eaT' — lưỡi chạm vòm miệng rồi nhả ra."            │    │
+│  │  Rule: English requires final consonants                        │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 3.3 Grammar Score Calculation
 
 ```python
-def calculate_grammar_score(
-    text: str,
-    corrections: List[GrammarCorrection],
-    student_level: str
-) -> float:
+def calculate_grammar_score(text: str, corrections: list, level: str) -> float:
     """
     Calculate grammar score from 0-100.
-    
+
     Scoring logic:
-    - Base score: 100
-    - Deductions based on error severity and student level
-    - Beginners get more lenient scoring
-    - Critical errors (communication breakdown) deduct more
+    - Start at 100
+    - Deduct points per error based on severity
+    - Beginners get more lenient scoring (smaller deductions)
+    - Longer sentences get a small bonus (more complex = harder)
+
+    Example:
+    - Text: "I want to eat pho please" (6 words)
+    - Corrections: 1 moderate error (vocabulary/register)
+    - Level: A2
+    - Score: 100 - (5 * 0.6) + 0.6 = 97.6 → 78 (scaled)
     """
-    if not text.strip():
-        return 0.0
-    
-    word_count = len(text.split())
-    if word_count == 0:
-        return 0.0
-    
-    base_score = 100.0
-    
-    # Level-based tolerance
-    tolerance = {
-        "A1": 0.5,   # Very lenient
+
+    # Level-based tolerance (how much to forgive)
+    TOLERANCE = {
+        "A1": 0.5,   # Very lenient — beginners make lots of mistakes
         "A2": 0.4,
         "B1": 0.3,
         "B2": 0.2,
-        "C1": 0.1,   # Strict
+        "C1": 0.1,   # Strict — advanced learners should be accurate
         "C2": 0.05
-    }.get(student_level, 0.3)
-    
-    # Deductions per error
+    }
+
+    # Severity point deductions
+    SEVERITY = {
+        "minor": 3,       # "a" vs "an" — small mistake
+        "moderate": 7,     # Tense error — affects meaning
+        "major": 15        # Communication breakdown — listener confused
+    }
+
+    word_count = len(text.split())
+    tolerance = TOLERANCE.get(level, 0.3)
+
+    # Calculate deductions
+    total_deduction = 0
     for correction in corrections:
-        severity_multiplier = {
-            "minor": 2,      # "a" vs "an"
-            "moderate": 5,    # tense error
-            "major": 10       # communication breakdown
-        }.get(correction.severity, 5)
-        
-        # Apply tolerance (beginners lose less)
-        deduction = severity_multiplier * (1 - tolerance)
-        base_score -= deduction
-    
-    # Bonus for longer utterances (more complex = harder)
-    length_bonus = min(5, word_count / 10)
-    base_score += length_bonus
-    
-    return max(0, min(100, base_score))
+        base_deduction = SEVERITY.get(correction["severity"], 7)
+        # Apply tolerance (beginners lose fewer points)
+        adjusted_deduction = base_deduction * (1 - tolerance)
+        total_deduction += adjusted_deduction
+
+    # Length bonus (reward longer utterances)
+    length_bonus = min(5, word_count / 5)
+
+    # Calculate final score
+    score = 100 - total_deduction + length_bonus
+    return max(0, min(100, round(score, 1)))
+
+
+# Examples:
+# "Hello" (1 word, 0 errors, A1) → 100 + 0.2 = 100
+# "I want apple" (3 words, 1 minor, A2) → 100 - 1.8 + 0.6 = 98.8
+# "I go yesterday" (3 words, 1 moderate, A2) → 100 - 4.2 + 0.6 = 96.4
+# "He don't like go school yesterday" (6 words, 2 errors, A2) → 100 - 8.4 + 1.2 = 92.8
 ```
 
-### 3.4 Feedback Presentation Rules
+### 3.4 Feedback Display Rules
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    FEEDBACK DISPLAY RULES                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  RULE 1: Maximum 3 corrections per turn                                 │
+│  ├── Don't overwhelm the student                                        │
+│  ├── Show the most important errors first                               │
+│  └── Minor errors can be skipped                                        │
+│                                                                          │
+│  RULE 2: Positive before negative                                       │
+│  ├── Start with what they did well                                      │
+│  ├── "Good try! Here's how to improve..."                              │
+│  └── Never just show errors without encouragement                       │
+│                                                                          │
+│  RULE 3: Vietnamese explanations always                                 │
+│  ├── All grammar explanations in Vietnamese                             │
+│  ├── Include the grammar rule in simple terms                           │
+│  └── Include a practice sentence                                        │
+│                                                                          │
+│  RULE 4: Inline highlighting                                            │
+│  ├── Errors highlighted in the transcript                               │
+│  ├── Red underline for errors                                           │
+│  ├── Tap to see correction + explanation                                │
+│  └── Green checkmark for correct parts                                  │
+│                                                                          │
+│  RULE 5: Level-appropriate detail                                       │
+│  ├── A1-A2: Simple rule + example                                       │
+│  ├── B1-B2: Rule + exception + alternative                              │
+│  └── C1-C2: Nuanced explanation + register difference                   │
+│                                                                          │
+│  RULE 6: Don't interrupt flow                                           │
+│  ├── Show feedback AFTER student finishes speaking                      │
+│  ├── Don't stop conversation for minor errors                           │
+│  ├── AI response naturally uses correct form                            │
+│  └── Student learns by hearing the correct version                      │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 4. F3: Pronunciation Scoring
+
+### 4.1 What It Does
+
+Analyzes the student's spoken audio and provides:
+1. Overall pronunciation score (0-100)
+2. Word-by-word breakdown with color coding
+3. Specific tips for low-scoring words (in Vietnamese)
+4. Comparison with correct pronunciation (play correct version)
+
+### 4.2 Pronunciation Error Patterns (Vietnamese Speakers)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    COMMON PRONUNCIATION ERRORS (VN Speakers)             │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ERROR 1: /θ/ (voiceless "th")                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Common mistake: /t/ or /s/                                      │    │
+│  │  Examples: "think" → /tɪŋk/, "three" → /triː/                  │    │
+│  │  Tip_vi: "Đặt lưỡi giữa răng trên và dưới, thổi hơi ra.       │    │
+│  │  Gió thổi qua lưỡi. Không phải /t/ (lưỡi chạm vòm)."          │    │
+│  │  Practice words: "think, three, thank, thick, thin, month"      │    │
+│  │  Practice sentences: "I think three things are important"       │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ERROR 2: /ð/ (voiced "th")                                             │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Common mistake: /d/ or /z/                                      │    │
+│  │  Examples: "the" → /də/, "this" → /dɪs/                        │    │
+│  │  Tip_vi: "Giống /θ/ nhưng có rung dây thanh.                    │    │
+│  │  Đặt tay lên cổ họng, nói 'thhhh' — tay phải rung."          │    │
+│  │  Practice words: "the, this, that, these, those, father"        │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ERROR 3: /r/ vs /l/ confusion                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Common mistake: /r/ and /l/ mixed or merged                    │    │
+│  │  Examples: "right" → /laɪt/, "light" → /raɪt/                  │    │
+│  │  Tip_vi: "/r/: Cuộn lưỡi lên, không chạm vòm miệng.            │    │
+│  │  /l/: Lưỡi chạm vòm miệng phía sau răng trên."                │    │
+│  │  Practice pairs: "right/light, road/load, red/led, fly/cry"     │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ERROR 4: /ɪ/ vs /iː/ (short vs long "i")                              │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Common mistake: Both pronounced as /iː/                        │    │
+│  │  Examples: "ship" → /ʃiːp/, "sit" → /siːt/                    │    │
+│  │  Tip_vi: "/ɪ/: Miệng mở rộng, ngắn, thả lỏng.                 │    │
+│  │  /iː/: Miệng kéo dài, cười, căng cơ."                        │    │
+│  │  Practice pairs: "ship/sheep, sit/seat, bit/beat, live/leave"   │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ERROR 5: /æ/ (the "a" in "cat")                                       │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Common mistake: /ɛ/ or /a/                                      │    │
+│  │  Examples: "cat" → /kɛt/, "bad" → /bɑːd/                      │    │
+│  │  Tip_vi: "Miệng mở rộng ngang, hạ hàm dưới.                    │    │
+│  │  Giống nói 'e' nhưng mở miệng hơn. Nói 'ae' nhanh."          │    │
+│  │  Practice words: "cat, bad, man, hand, stand, happy"            │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ERROR 6: /v/ (Vietnamese doesn't have /v/)                             │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Common mistake: /b/                                             │    │
+│  │  Examples: "very" → /ˈbɛri/, "video" → /ˈbɪdioʊ/              │    │
+│  │  Tip_vi: "Răng trên cắn nhẹ môi dưới, thổi hơi ra.             │    │
+│  │  Khác /b/ (môi chạm nhau). Nói 'vvvv' rung môi."             │    │
+│  │  Practice words: "very, video, vine, view, voice, love"         │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ERROR 7: Final consonant deletion (BIGGEST issue)                      │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Common mistake: Drop final consonant entirely                  │    │
+│  │  Examples: "good" → /gʊ/, "like" → /laɪ/, "want" → /wɒn/     │    │
+│  │  Tip_vi: "Tiếng Việt không có phụ âm cuối mạnh.                │    │
+│  │  Phải phát âm rõ phụ âm cuối:                                   │    │
+│  │  - /t/: Lưỡi chạm vòm rồi nhả ra (want, eat, what)           │    │
+│  │  - /d/: Giống /t/ nhưng rung dây thanh (good, and)            │    │
+│  │  - /k/: Cuống lưỡi chạm vòm (like, make, speak)               │    │
+│  │  - /s/: Thổi hơi qua kẽ răng (this, yes, books)               │    │
+│  │  Practice: "I want to eat good food and drink milk"             │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ERROR 8: Word stress                                                    │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Common mistake: Equal stress on all syllables                  │    │
+│  │  Examples: "PHO-to-GRAPH" vs "pho-TO-gra-pher"                 │    │
+│  │  Tip_vi: "Nhấn mạnh 1 âm tiết, các âm còn lại nhẹ hơn.        │    │
+│  │  Quy tắc: Danh từ nhấn âm 1, động từ nhấn âm cuối.           │    │
+│  │  Practice: "PHOtograph, phoTOGrapher, inTEResting, COMfortable"│    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. F4: Topic-Based Conversations
+
+### 5.1 Complete Topic Database (50+ Topics)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    TOPIC DATABASE                                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ═══════════════════════════════════════════════════════════════════     │
+│  A1 LEVEL (Beginner) — Grade 6-7                                        │
+│  ═══════════════════════════════════════════════════════════════════     │
+│                                                                          │
+│  Topic 1: Meeting New People                                            │
+│  ├── id: "meeting-people"                                               │
+│  ├── title_vi: "Gặp Gỡ Người Mới"                                     │
+│  ├── scenario: "You're at a school event meeting new classmates"        │
+│  ├── ai_role: "Friendly new classmate from another school"              │
+│  ├── max_turns: 8                                                       │
+│  ├── target_vocabulary: ["hello", "nice to meet you", "name",           │
+│  │                       "from", "like", "favorite"]                    │
+│  ├── target_grammar: ["My name is...", "I'm from...", "I like..."]     │
+│  ├── curriculum: "Grade 6, Unit 1: Getting to Know You"                │
+│  └── duration: 5-8 minutes                                              │
+│                                                                          │
+│  Topic 2: My Family                                                     │
+│  ├── id: "family"                                                       │
+│  ├── title_vi: "Gia Đình Của Tôi"                                      │
+│  ├── scenario: "Your friend asks about your family"                     │
+│  ├── ai_role: "Curious classmate"                                       │
+│  ├── max_turns: 10                                                      │
+│  ├── target_vocabulary: ["mother", "father", "sister", "brother",       │
+│  │                       "older", "younger", "family"]                  │
+│  ├── target_grammar: ["I have...", "She/He is...", "How many...?"]     │
+│  ├── curriculum: "Grade 6, Unit 3: My Family"                          │
+│  └── duration: 5-8 minutes                                              │
+│                                                                          │
+│  Topic 3: Hobbies & Free Time                                           │
+│  ├── id: "hobbies"                                                      │
+│  ├── title_vi: "Sở Thích & Thời Gian Rảnh"                            │
+│  ├── scenario: "Chatting with a friend about what you do for fun"       │
+│  ├── ai_role: "Curious friend"                                          │
+│  ├── max_turns: 10                                                      │
+│  ├── target_vocabulary: ["play", "watch", "listen", "read",             │
+│  │                       "favorite", "hobby", "free time"]              │
+│  ├── target_grammar: ["I like + V-ing", "Do you like...?",             │
+│  │                     "My favorite... is..."]                          │
+│  ├── curriculum: "Grade 6, Unit 5: Hobbies"                            │
+│  └── duration: 5-8 minutes                                              │
+│                                                                          │
+│  ═══════════════════════════════════════════════════════════════════     │
+│  A2 LEVEL (Pre-Intermediate) — Grade 8-9                                │
+│  ═══════════════════════════════════════════════════════════════════     │
+│                                                                          │
+│  Topic 4: Ordering Food                                                 │
+│  ├── id: "ordering-food"                                                │
+│  ├── title_vi: "Gọi Món Tại Nhà Hàng"                                 │
+│  ├── scenario: "You're ordering food at a Vietnamese restaurant"        │
+│  ├── ai_role: "Friendly waiter"                                         │
+│  ├── max_turns: 12                                                      │
+│  ├── target_vocabulary: ["order", "recommend", "bill", "delicious",     │
+│  │                       "spicy", "menu", "drink"]                      │
+│  ├── target_grammar: ["I'd like...", "Could I have...?",               │
+│  │                     "How much is...?", "Can I get...?"]             │
+│  ├── curriculum: "Grade 8, Unit 4: Food and Drinks"                    │
+│  └── duration: 8-12 minutes                                             │
+│                                                                          │
+│  Topic 5: Asking for Directions                                         │
+│  ├── id: "directions"                                                   │
+│  ├── title_vi: "Hỏi Đường"                                              │
+│  ├── scenario: "You're lost in Hanoi and need directions"               │
+│  ├── ai_role: "Helpful local person"                                    │
+│  ├── max_turns: 12                                                      │
+│  ├── target_vocabulary: ["turn left", "turn right", "straight",         │
+│  │                       "next to", "opposite", "near", "far"]         │
+│  ├── target_grammar: ["Where is...?", "How do I get to...?",           │
+│  │                     "Go straight, then turn..."]                     │
+│  ├── curriculum: "Grade 8, Unit 6: Places"                             │
+│  └── duration: 8-12 minutes                                             │
+│                                                                          │
+│  ═══════════════════════════════════════════════════════════════════     │
+│  B1 LEVEL (Intermediate) — Grade 10-11                                  │
+│  ═══════════════════════════════════════════════════════════════════     │
+│                                                                          │
+│  Topic 6: Job Interview                                                 │
+│  ├── id: "job-interview"                                                │
+│  ├── title_vi: "Phỏng Vấn Xin Việc"                                   │
+│  ├── scenario: "You're interviewing for a part-time job"                │
+│  ├── ai_role: "HR manager"                                              │
+│  ├── max_turns: 15                                                      │
+│  ├── target_vocabulary: ["experience", "skills", "strengths",           │
+│  │                       "weaknesses", "salary", "schedule"]            │
+│  ├── target_grammar: ["I have experience in...", "I'm good at...",     │
+│  │                     "Could you tell me about...?"]                   │
+│  ├── curriculum: "Grade 11, Unit 4: Careers"                           │
+│  └── duration: 10-15 minutes                                            │
+│                                                                          │
+│  ═══════════════════════════════════════════════════════════════════     │
+│  B2 LEVEL (Upper Intermediate) — IELTS Prep                             │
+│  ═══════════════════════════════════════════════════════════════════     │
+│                                                                          │
+│  Topic 7: IELTS Part 1 — Personal Questions                            │
+│  ├── id: "ielts-part1"                                                  │
+│  ├── title_vi: "IELTS Part 1: Câu Hỏi Cá Nhân"                        │
+│  ├── scenario: "IELTS examiner asking about your life"                  │
+│  ├── ai_role: "IELTS examiner"                                          │
+│  ├── max_turns: 15                                                      │
+│  ├── target_vocabulary: ["discourse markers", "fluency fillers"]       │
+│  ├── target_grammar: ["Tense variety", "Complex sentences"]            │
+│  ├── time_per_response: "30-45 seconds"                                 │
+│  └── duration: 10-15 minutes                                            │
+│                                                                          │
+│  ═══════════════════════════════════════════════════════════════════     │
+│  VIETNAMESE CULTURE TOPICS                                              │
+│  ═══════════════════════════════════════════════════════════════════     │
+│                                                                          │
+│  Topic 8: Explaining Tet                                                │
+│  ├── id: "tet"                                                          │
+│  ├── title_vi: "Giải Thích Tết Cho Người Nước Ngoài"                  │
+│  ├── scenario: "A foreign friend asks about Vietnamese New Year"        │
+│  ├── ai_role: "Curious foreign friend"                                  │
+│  ├── max_turns: 12                                                      │
+│  ├── target_vocabulary: ["lunar new year", "tradition", "celebration",  │
+│  │                       "lucky money", "ancestor", "fireworks"]        │
+│  ├── target_grammar: ["We usually...", "It's tradition to...",         │
+│  │                     "The reason is..."]                              │
+│  └── duration: 8-12 minutes                                             │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6. F5: Vocabulary Builder (Spaced Repetition)
+
+### 6.1 How Vocabulary Is Extracted
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    VOCABULARY EXTRACTION FLOW                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  During conversation, the system automatically extracts new words:      │
+│                                                                          │
+│  Student says: "I want to order the beef pho with spring rolls"         │
+│  AI responds: "Great choice! The spring rolls are very crispy today"    │
+│                                                                          │
+│  Extraction process:                                                     │
+│  1. Parse both sentences for content words (nouns, verbs, adj, adv)    │
+│  2. Check against user's known vocabulary list                          │
+│  3. Filter: only words above user's current level                      │
+│  4. Limit: max 3 new words per turn (don't overwhelm)                  │
+│                                                                          │
+│  Extracted words:                                                       │
+│  ├── "order" — student already knows (in vocab list) → SKIP            │
+│  ├── "beef" — student already knows → SKIP                             │
+│  ├── "pho" — student already knows → SKIP                              │
+│  ├── "spring rolls" — NEW → EXTRACT                                    │
+│  │   ├── phonetic: /sprɪŋ roʊlz/                                       │
+│  │   ├── meaning_vi: "chả cuốn"                                        │
+│  │   └── example: "The spring rolls are very crispy"                   │
+│  ├── "crispy" — NEW → EXTRACT                                          │
+│  │   ├── phonetic: /ˈkrɪspi/                                           │
+│  │   ├── meaning_vi: "giòn"                                            │
+│  │   └── example: "The spring rolls are very crispy today"             │
+│  └── "choice" — student already knows → SKIP                           │
+│                                                                          │
+│  After conversation ends:                                               │
+│  ├── New words added to vocabulary list                                │
+│  ├── Next review scheduled (1 day from now)                            │
+│  └── Notification: "Bạn đã học 2 từ mới hôm nay! 📚"                 │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 6.2 Review UI (Flashcard)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    VOCABULARY REVIEW UI                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  HEADER                                                          │    │
+│  │  Today's Review: 12 words  │  Streak: 🔥 7 days                  │    │
+│  │  Progress: ████████████░░░░ 8/12                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  STATE 1: Show word (student tries to recall meaning)                   │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │                    ┌─────────────────────┐                       │    │
+│  │                    │                     │                       │    │
+│  │                    │    "recommend"       │                       │    │
+│  │                    │    /ˌrekəˈmend/      │                       │    │
+│  │                    │    [verb]            │                       │    │
+│  │                    │                     │                       │    │
+│  │                    │    Meaning: ?        │                       │    │
+│  │                    │                     │                       │    │
+│  │                    └─────────────────────┘                       │    │
+│  │                                                                  │    │
+│  │  [🔊 Listen]     [Show Answer]                                  │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  STATE 2: Reveal answer (student rates difficulty)                      │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │                    ┌─────────────────────┐                       │    │
+│  │                    │                     │                       │    │
+│  │                    │    "recommend"       │                       │    │
+│  │                    │    /ˌrekəˈmend/      │                       │    │
+│  │                    │    [verb]            │                       │    │
+│  │                    │                     │                       │    │
+│  │                    │    Meaning:          │                       │    │
+│  │                    │    giới thiệu, khuyên│                       │    │
+│  │                    │                     │                       │    │
+│  │                    │    Example:          │                       │    │
+│  │                    │    "I recommend the  │                       │    │
+│  │                    │     pho bo."         │                       │    │
+│  │                    │                     │                       │    │
+│  │                    └─────────────────────┘                       │    │
+│  │                                                                  │    │
+│  │  [🔊 Listen]  [🎤 Practice]                                     │    │
+│  │                                                                  │    │
+│  │  How well did you know this?                                     │    │
+│  │  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐                 │    │
+│  │  │  1   │ │  2   │ │  3   │ │  4   │ │  5   │                 │    │
+│  │  │Again │ │ Hard │ │ Good │ │ Easy │ │Perfect│                 │    │
+│  │  │ 1d   │ │ 3d   │ │ 7d   │ │ 14d  │ │ 30d  │                 │    │
+│  │  └──────┘ └──────┘ └──────┘ └──────┘ └──────┘                 │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  Rating → Next Review:                                                  │
+│  ├── 1 (Again): Show again in 1 minute (within same session)           │
+│  ├── 2 (Hard): Next review in 1 day                                    │
+│  ├── 3 (Good): Next review in 3 days                                   │
+│  ├── 4 (Easy): Next review in 7 days                                   │
+│  └── 5 (Perfect): Next review in 14 days                               │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 7. F6: Parent Dashboard
+
+### 7.1 Parent Dashboard Screens
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    PARENT DASHBOARD                                      │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  HEADER                                                          │    │
+│  │  👨‍👩‍👧 Phụ Huynh — Con: Minh Nguyễn                                │    │
+│  │  Lớp 10, Trường THPT Lê Quý Đôn                                 │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  THIS WEEK OVERVIEW                                              │    │
+│  │                                                                  │    │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │    │
+│  │  │ 45 min   │ │  8       │ │  23      │ │  72/100  │          │    │
+│  │  │ Practice │ │ Convos   │ │ New Words│ │ Score    │          │    │
+│  │  │ ↑15% ↑   │ │ ↑3 ↑     │ │ ↑5 ↑     │ │ ↑5 ↑     │          │    │
+│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  SCORE TREND (Line chart — 4 weeks)                              │    │
+│  │                                                                  │    │
+│  │  80│                                          ╭──               │    │
+│  │  70│                         ╭──╮            │                  │    │
+│  │  60│              ╭──╮      │  │            │                  │    │
+│  │  50│  ╭──╮       │  │      │  │            │                  │    │
+│  │  40│  │  │       │  │      │  │            │                  │    │
+│  │     └──┴──┴───────┴──┴──────┴──┴────────────┴──                │    │
+│  │     Wk1  Wk2    Wk3  Wk4   Wk5  Wk6      Wk7                 │    │
+│  │                                                                  │    │
+│  │  Legend: ── Grammar  ── Pronunciation  ── Overall               │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  STRENGTHS & IMPROVEMENTS                                        │    │
+│  │                                                                  │    │
+│  │  ✅ Điểm mạnh:                                                  │    │
+│  │  ├── Tốt khi chào hỏi và giới thiệu bản thân                   │    │
+│  │  ├── Từ vựng cải thiện đều qua từng tuần                      │    │
+│  │  └── Tự tin hơn khi nói về sở thích                            │    │
+│  │                                                                  │    │
+│  │  ⚠️ Cần cải thiện:                                              │    │
+│  │  ├── Ngữ pháp: Thì quá khứ vẫn hay nhầm                        │    │
+│  │  ├── Phát âm: Âm /θ/ và /ð/ (th) chưa đúng                    │    │
+│  │  └── Độ trôi chảy: Còn nhiều khoảng dừng khi nói dài           │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  ACTIONS                                                         │    │
+│  │                                                                  │    │
+│  │  [📧 Gửi báo cáo qua Zalo]  [📊 Tải PDF]  [⚙️ Cài đặt]       │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 8. F7: Gamification System
+
+### 8.1 XP & Leveling
 
 ```python
-FEEDBACK_RULES = {
-    "max_corrections_per_turn": 3,      # Don't overwhelm
-    "show_severity_order": "major_first", # Most important first
-    "inline_highlighting": True,          # Highlight errors in transcript
-    "vietnamese_explanation": True,       # Always explain in Vietnamese
-    "positive_before_negative": True,     # "Good try! Here's how to improve..."
-    "level_appropriate_detail": {
-        "A1-A2": "Simple rule + example",
-        "B1-B2": "Rule + exception + alternative",
-        "C1-C2": "Nuanced explanation + register difference"
-    }
+XP_REWARDS = {
+    "complete_conversation": 50,        # Finish a conversation session
+    "perfect_grammar_turn": 10,         # Grammar score 100 on a turn
+    "new_vocabulary_learned": 5,        # Learn a new word
+    "daily_streak_bonus": 20,           # Per day of streak (day 1=20, day 2=40...)
+    "weekly_goal_met": 100,             # Practice enough days in a week
+    "pronunciation_improvement": 15,    # Score improved vs last time
+    "topic_completed_first_time": 25,   # First time completing a new topic
 }
+
+LEVELS = [
+    {"level": 1, "xp": 0, "title": "Seed", "title_vi": "Hạt Giống", "emoji": "🌱"},
+    {"level": 2, "xp": 100, "title": "Sprout", "title_vi": "Mầm Non", "emoji": "🌿"},
+    {"level": 3, "xp": 300, "title": "Sapling", "title_vi": "Cây Non", "emoji": "🌲"},
+    {"level": 4, "xp": 600, "title": "Tree", "title_vi": "Cây Trưởng Thành", "emoji": "🌳"},
+    {"level": 5, "xp": 1000, "title": "Forest", "title_vi": "Khu Rừng", "emoji": "🏔️"},
+    {"level": 6, "xp": 1500, "title": "Mountain", "title_vi": "Ngọn Núi", "emoji": "⛰️"},
+    {"level": 7, "xp": 2500, "title": "Sky", "title_vi": "Bầu Trời", "emoji": "☁️"},
+    {"level": 8, "xp": 4000, "title": "Star", "title_vi": "Ngôi Sao", "emoji": "⭐"},
+    {"level": 9, "xp": 6000, "title": "Galaxy", "title_vi": "Thiên Hà", "emoji": "🌌"},
+    {"level": 10, "xp": 10000, "title": "Universe", "title_vi": "Vũ Trụ", "emoji": "🚀"},
+]
+```
+
+### 8.2 Achievements
+
+```python
+ACHIEVEMENTS = [
+    {"id": "first_step", "name_vi": "Bước Đầu Tiên", "emoji": "👶",
+     "condition": "Complete 1 conversation", "xp": 10},
+    {"id": "week_warrior", "name_vi": "7 Ngày Liên Tiếp", "emoji": "🔥",
+     "condition": "7-day practice streak", "xp": 50},
+    {"id": "month_master", "name_vi": "30 Ngày Kiên Trì", "emoji": "💎",
+     "condition": "30-day practice streak", "xp": 200},
+    {"id": "century_club", "name_vi": "Trăm Trận", "emoji": "💯",
+     "condition": "Complete 100 conversations", "xp": 100},
+    {"id": "grammar_guru", "name_vi": "Bậc Thầy Ngữ Pháp", "emoji": "📝",
+     "condition": "Grammar score > 90 for 10 consecutive sessions", "xp": 75},
+    {"id": "pron_pro", "name_vi": "Phát Âm Chuẩn", "emoji": "🎤",
+     "condition": "Pronunciation score > 85 for 10 consecutive sessions", "xp": 75},
+    {"id": "word_collector", "name_vi": "Sưu Tập Từ Vựng", "emoji": "📚",
+     "condition": "Learn 500 vocabulary words", "xp": 100},
+    {"id": "topic_explorer", "name_vi": "Khám Phá Chủ Đề", "emoji": "🗺️",
+     "condition": "Try 20 different topics", "xp": 50},
+    {"id": "night_owl", "name_vi": "Cú Đêm", "emoji": "🦉",
+     "condition": "Practice after 10 PM on 10 different days", "xp": 25},
+    {"id": "early_bird", "name_vi": "Chim Sớm", "emoji": "🐦",
+     "condition": "Practice before 7 AM on 10 different days", "xp": 25},
+    {"id": "perfectionist", "name_vi": "Người Hoàn Hảo", "emoji": "✨",
+     "condition": "Get grammar score 100 on 5 turns in one session", "xp": 50},
+    {"id": "social_butterfly", "name_vi": "Bướm Xã Hội", "emoji": "🦋",
+     "condition": "Complete all 'Daily Life' topics", "xp": 75},
+]
 ```
 
 ---
 
-## 4. Feature F3: Pronunciation Scoring
+## 9. F8: AI Video Avatar (Phase 3)
 
-### 4.1 Description
+### 9.1 What It Does
 
-Phoneme-level pronunciation assessment with word-by-word scoring and actionable tips for improvement.
+An AI video avatar that appears as a face on screen while talking to the student. The avatar:
+- Lip-syncs with the TTS audio output
+- Shows facial expressions matching the conversation tone
+- Has multiple personality options (friendly, professional, casual)
+- Creates a more engaging, "human-like" experience
 
-### 4.2 Scoring Algorithm
-
-```python
-class PronunciationScorer:
-    """
-    Multi-dimensional pronunciation scoring.
-    
-    Dimensions:
-    1. Accuracy (40%): Phoneme-level correctness
-    2. Fluency (25%): Speech rate, pauses, hesitations
-    3. Completeness (20%): All words spoken
-    4. Prosody (15%): Stress, rhythm, intonation
-    """
-    
-    def score(self, audio: bytes, reference_text: str, student_level: str) -> PronunciationResult:
-        # 1. Get phoneme alignment
-        alignment = self.aligner.align(audio, reference_text)
-        
-        # 2. Score each dimension
-        accuracy = self.score_accuracy(alignment)
-        fluency = self.score_fluency(audio, reference_text)
-        completeness = self.score_completeness(alignment, reference_text)
-        prosody = self.score_prosody(audio, reference_text)
-        
-        # 3. Weighted overall score
-        overall = (
-            accuracy * 0.40 +
-            fluency * 0.25 +
-            completeness * 0.20 +
-            prosody * 0.15
-        )
-        
-        # 4. Word-level scores
-        word_scores = []
-        for word_alignment in alignment.words:
-            word_score = self.score_word(word_alignment)
-            word_scores.append(word_score)
-        
-        # 5. Generate tips for low-scoring words
-        tips = []
-        for ws in word_scores:
-            if ws.score < 70:
-                tip = self.generate_tip(ws, student_level)
-                tips.append(tip)
-        
-        return PronunciationResult(
-            overall=overall,
-            accuracy=accuracy,
-            fluency=fluency,
-            completeness=completeness,
-            prosody=prosody,
-            word_scores=word_scores,
-            tips=tips
-        )
-```
-
-### 4.3 Common Pronunciation Errors for Vietnamese Speakers
-
-```python
-VN_PRONUNCIATION_ERRORS = {
-    "/θ/ (th)": {
-        "common_mistake": "/t/ or /s/",
-        "examples": ["think → /tɪŋk/", "three → /triː/"],
-        "tip_vi": "Đặt lưỡi giữa răng trên và dưới, thổi hơi ra. Gió thổi qua lưỡi.",
-        "practice_words": ["think", "three", "thank", "thick", "thin"]
-    },
-    "/ð/ (th voiced)": {
-        "common_mistake": "/d/ or /z/",
-        "examples": ["the → /də/", "this → /dɪs/"],
-        "tip_vi": "Giống /θ/ nhưng có rung dây thanh. Tay đặt cổ họng thấy rung.",
-        "practice_words": ["the", "this", "that", "these", "those"]
-    },
-    "/r/ vs /l/": {
-        "common_mistake": "Confused or merged",
-        "examples": ["right → /laɪt/", "light → /raɪt/"],
-        "tip_vi": "/r/: Cuộn lưỡi lên, không chạm vòm miệng. /l/: Lưỡi chạm vòm miệng phía sau răng.",
-        "practice_words": ["right/light", "road/load", "red/led"]
-    },
-    "/ɪ/ vs /iː/": {
-        "common_mistake": "Both pronounced as /iː/",
-        "examples": ["ship → /ʃiːp/", "sit → /siːt/"],
-        "tip_vi": "/ɪ/: Miệng mở rộng, ngắn. /iː/: Miệng kéo dài, cười.",
-        "practice_words": ["ship/sheep", "sit/seat", "bit/beat"]
-    },
-    "/æ/": {
-        "common_mistake": "/ɛ/ or /a/",
-        "examples": ["cat → /kɛt/", "bad → /bɑːd/"],
-        "tip_vi": "Miệng mở rộng ngang, hạ hàm dưới. Giống nói 'e' nhưng mở miệng hơn.",
-        "practice_words": ["cat", "bad", "man", "hand", "stand"]
-    },
-    "/v/": {
-        "common_mistake": "/b/ (Vietnamese doesn't have /v/)",
-        "examples": ["very → /ˈbɛri/", "video → /ˈbɪdioʊ/"],
-        "tip_vi": "Răng trên cắn nhẹ môi dưới, thổi hơi ra. Khác /b/ (môi chạm nhau).",
-        "practice_words": ["very", "video", "vine", "view", "voice"]
-    },
-    "Final consonants": {
-        "common_mistake": "Dropped or unreleased",
-        "examples": ["good → /gʊ/", "like → /laɪ/"],
-        "tip_vi": "Tiếng Việt không có phụ âm cuối mạnh. Phải phát âm rõ: /d/, /k/, /t/ cuối từ.",
-        "practice_words": ["good", "like", "want", "help", "speak"]
-    },
-    "Word stress": {
-        "common_mistake": "Equal stress on all syllables",
-        "examples": ["PHO-toGRAPH vs pho-TO-gra-pher"],
-        "tip_vi": "Nhấn mạnh 1 âm tiết, các âm còn lại nhẹ hơn. VD: pho-TO-gra-pher",
-        "practice_words": ["photograph", "photographer", "interesting", "comfortable"]
-    }
-}
-```
-
-### 4.4 Pronunciation Feedback UI Spec
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  PRONUNCIATION FEEDBACK UI SPECIFICATION                             │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  Layout:                                                             │
-│  ├── Header: Sentence text + overall score                          │
-│  ├── Word grid: Each word with color-coded score                    │
-│  ├── Detail panel: Selected word breakdown                          │
-│  ├── Tips section: Vietnamese explanation + practice words          │
-│  └── Action buttons: Listen / Try Again                             │
-│                                                                      │
-│  Color coding:                                                       │
-│  ├── 90-100: Green (#22C55E) — Excellent                            │
-│  ├── 70-89:  Blue (#3B82F6) — Good                                  │
-│  ├── 50-69:  Orange (#F59E0B) — Needs improvement                   │
-│  └── 0-49:   Red (#EF4444) — Practice more                          │
-│                                                                      │
-│  Interactions:                                                       │
-│  ├── Tap word → Show phoneme breakdown + tips                       │
-│  ├── Tap speaker icon → Play correct pronunciation                  │
-│  ├── Tap mic icon → Re-practice that specific word                  │
-│  └── Swipe left/right → Navigate between words                      │
-│                                                                      │
-│  Mobile responsive:                                                  │
-│  ├── Phone: 2 words per row                                         │
-│  ├── Tablet: 4 words per row                                        │
-│  └── Desktop: Full width, side-by-side with conversation            │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 5. Feature F4: Topic-Based Conversations
-
-### 5.1 Topic Database
-
-```python
-TOPICS = {
-    # === A1-A2 Level (Beginner) ===
-    "daily-life": {
-        "greetings": {
-            "title_en": "Meeting New People",
-            "title_vi": "Gặp Gỡ Người Mới",
-            "level": "A1",
-            "scenario": "You're at a school event and meeting new classmates",
-            "ai_role": "Friendly new classmate",
-            "turns": 8,
-            "target_vocabulary": ["hello", "nice to meet you", "name", "from", "like"],
-            "target_grammar": ["My name is...", "I'm from...", "I like..."],
-            "curriculum": "Grade 6, Unit 1"
-        },
-        "family": {
-            "title_en": "Talking About Family",
-            "title_vi": "Nói Về Gia Đình",
-            "level": "A1",
-            "scenario": "Your new friend asks about your family",
-            "ai_role": "Curious classmate",
-            "turns": 10,
-            "target_vocabulary": ["mother", "father", "sister", "brother", "older", "younger"],
-            "target_grammar": ["I have...", "She/He is...", "How many...?"],
-            "curriculum": "Grade 6, Unit 3"
-        },
-        "hobbies": {
-            "title_en": "What Do You Like?",
-            "title_vi": "Bạn Thích Gì?",
-            "level": "A1",
-            "scenario": "Chatting with a friend about hobbies and free time",
-            "ai_role": "Curious friend",
-            "turns": 10,
-            "target_vocabulary": ["play", "watch", "listen", "read", "favorite"],
-            "target_grammar": ["I like + V-ing", "Do you like...?", "My favorite..."],
-            "curriculum": "Grade 6, Unit 5"
-        },
-        "food": {
-            "title_en": "At the Restaurant",
-            "title_vi": "Tại Nhà Hàng",
-            "level": "A2",
-            "scenario": "You're ordering food at a Vietnamese restaurant with a foreign friend",
-            "ai_role": "Friendly waiter",
-            "turns": 12,
-            "target_vocabulary": ["order", "recommend", "bill", "delicious", "spicy"],
-            "target_grammar": ["I'd like...", "Could I have...?", "How much...?"],
-            "curriculum": "Grade 7, Unit 4"
-        },
-        "weather": {
-            "title_en": "Weather and Seasons",
-            "title_vi": "Thời Tiết và Mùa",
-            "level": "A2",
-            "scenario": "Talking about weather with a foreign friend visiting Vietnam",
-            "ai_role": "Foreign friend visiting Vietnam",
-            "turns": 10,
-            "target_vocabulary": ["hot", "cold", "rainy", "sunny", "season"],
-            "target_grammar": ["It's + adjective", "What's the weather like?", "In Vietnam..."],
-            "curriculum": "Grade 7, Unit 6"
-        }
-    },
-    
-    # === B1 Level (Intermediate) ===
-    "school": {
-        "subjects": {
-            "title_en": "Favorite Subjects",
-            "title_vi": "Môn Học Yêu Thích",
-            "level": "B1",
-            "scenario": "Discussing school subjects with an exchange student",
-            "ai_role": "Exchange student from the US",
-            "turns": 12,
-            "target_vocabulary": ["mathematics", "literature", "difficult", "interesting", "prefer"],
-            "target_grammar": ["I prefer... because...", "Comparatives", "Superlatives"],
-            "curriculum": "Grade 9, Unit 1"
-        },
-        "exams": {
-            "title_en": "Preparing for Exams",
-            "title_vi": "Chuẩn Bị Thi",
-            "level": "B1",
-            "scenario": "Talking to a classmate about exam preparation strategies",
-            "ai_role": "Studious classmate",
-            "turns": 12,
-            "target_vocabulary": ["review", "concentrate", "schedule", "nervous", "confident"],
-            "target_grammar": ["Should/shouldn't", "If I..., I will...", "Present Perfect"],
-            "curriculum": "Grade 10, Unit 2"
-        }
-    },
-    
-    # === B1-B2 Level (Upper Intermediate) ===
-    "travel": {
-        "airport": {
-            "title_en": "At the Airport",
-            "title_vi": "Tại Sân Bay",
-            "level": "B1",
-            "scenario": "You're at Tan Son Nhat airport, checking in for a flight",
-            "ai_role": "Airport staff",
-            "turns": 15,
-            "target_vocabulary": ["boarding pass", "luggage", "departure", "gate", "delay"],
-            "target_grammar": ["Passive voice", "Will for predictions", "Conditionals"],
-            "curriculum": "Grade 11, Unit 5"
-        },
-        "hotel": {
-            "title_en": "Booking a Hotel",
-            "title_vi": "Đặt Phòng Khách Sạn",
-            "level": "B1",
-            "scenario": "Calling a hotel to book a room for your family vacation",
-            "ai_role": "Hotel receptionist",
-            "turns": 12,
-            "target_vocabulary": ["reservation", "available", "check-in", "check-out", "amenities"],
-            "target_grammar": ["Would like to", "How much does... cost?", "Conditionals"],
-            "curriculum": "Grade 11, Unit 6"
-        }
-    },
-    
-    # === IELTS Preparation ===
-    "ielts": {
-        "part1_personal": {
-            "title_en": "IELTS Part 1: Personal Questions",
-            "title_vi": "IELTS Part 1: Câu Hỏi Cá Nhân",
-            "level": "B1-B2",
-            "scenario": "IELTS speaking examiner asking personal questions",
-            "ai_role": "IELTS examiner",
-            "turns": 15,
-            "target_vocabulary": ["fluency markers", "discourse markers"],
-            "target_grammar": ["Tense variety", "Complex sentences"],
-            "time_per_response": "30-45 seconds"
-        },
-        "part2_cuecard": {
-            "title_en": "IELTS Part 2: Cue Card",
-            "title_vi": "IELTS Part 2: Thẻ Chủ Đề",
-            "level": "B2",
-            "scenario": "Describe a place you would like to visit",
-            "ai_role": "IELTS examiner",
-            "turns": 3,
-            "prep_time": "1 minute",
-            "speak_time": "2 minutes",
-            "target_vocabulary": ["Descriptive language", "Sequencing words"],
-            "target_grammar": ["Future forms", "Hypothetical language"]
-        }
-    },
-    
-    # === Vietnamese Culture Topics ===
-    "culture": {
-        "tet": {
-            "title_en": "Explaining Tet to a Foreigner",
-            "title_vi": "Giải Thích Tết Cho Người Nước Ngoài",
-            "level": "B1",
-            "scenario": "A foreign friend asks you about Vietnamese New Year",
-            "ai_role": "Curious foreign friend",
-            "turns": 12,
-            "target_vocabulary": ["lunar new year", "tradition", "celebration", "lucky money", "ancestor"],
-            "target_grammar": ["Used to", "Present Perfect for experiences", "Cultural explanations"]
-        },
-        "pho": {
-            "title_en": "Vietnamese Food Culture",
-            "title_vi": "Văn Hóa Ẩm Thực Việt",
-            "level": "A2-B1",
-            "scenario": "Teaching a foreigner about Vietnamese food",
-            "ai_role": "Foreign food blogger visiting Vietnam",
-            "turns": 12,
-            "target_vocabulary": ["ingredients", "recipe", "traditional", "popular", "recommend"],
-            "target_grammar": ["Imperatives for instructions", "Passive voice", "Comparatives"]
-        }
-    }
-}
-```
-
----
-
-## 6. Feature F5: Vocabulary Builder
-
-### 6.1 Description
-
-Automated vocabulary extraction from conversations + spaced repetition system for long-term retention.
-
-### 6.2 Vocabulary Extraction from Conversations
-
-```python
-class VocabularyExtractor:
-    """Extract new vocabulary from conversation turns."""
-    
-    def extract(self, conversation_turn: ConversationTurn, user_vocab: Set[str]) -> List[NewVocabulary]:
-        """
-        Extract vocabulary from a conversation turn.
-        
-        Criteria for extraction:
-        1. Word is not in user's known vocabulary
-        2. Word is above user's current level (not too easy)
-        3. Word appeared in meaningful context
-        4. Word is a content word (noun, verb, adj, adv) — not function words
-        """
-        words = self.tokenize(conversation_turn.ai_text)
-        
-        new_vocab = []
-        for word in words:
-            if self.is_content_word(word) and word.lower() not in user_vocab:
-                entry = self.lookup_word(word)
-                if entry.level >= self.user_level_threshold(conversation_turn.user_level):
-                    new_vocab.append(NewVocabulary(
-                        word=word,
-                        phonetic=entry.phonetic,
-                        part_of_speech=entry.pos,
-                        meaning_en=entry.definition,
-                        meaning_vi=entry.definition_vi,
-                        example_from_conversation=self.extract_context(word, conversation_turn),
-                        source="conversation"
-                    ))
-        
-        return new_vocab[:3]  # Max 3 new words per turn (don't overwhelm)
-```
-
-### 6.3 Review UI Specification
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  VOCABULARY REVIEW UI                                                │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  State 1: Show word                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │                                                              │   │
-│  │                    "recommend"                                │   │
-│  │                    /ˌrekəˈmend/                               │   │
-│  │                    [verb]                                     │   │
-│  │                                                              │   │
-│  │  Meaning: ?                                                  │   │
-│  │                                                              │   │
-│  │  [🔊 Listen]  [Show Answer]                                  │   │
-│  │                                                              │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                      │
-│  State 2: Reveal answer                                              │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │                                                              │   │
-│  │                    "recommend"                                │   │
-│  │                    /ˌrekəˈmend/                               │   │
-│  │                    [verb]                                     │   │
-│  │                                                              │   │
-│  │  Meaning: giới thiệu, khuyên dùng                            │   │
-│  │  "I recommend the pho bo."                                   │   │
-│  │                                                              │   │
-│  │  How well did you know this?                                 │   │
-│  │  [1 Again] [2 Hard] [3 Good] [4 Easy] [5 Perfect]           │   │
-│  │                                                              │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                      │
-│  Rating → Next Review Interval:                                      │
-│  ├── 1 (Again): 1 minute                                            │
-│  ├── 2 (Hard): 1 day                                                │
-│  ├── 3 (Good): 3 days                                               │
-│  ├── 4 (Easy): 7 days                                               │
-│  └── 5 (Perfect): 14 days                                           │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 7. Feature F6: Parent Dashboard
-
-### 7.1 Description
-
-Separate web/app interface for parents to monitor their children's learning progress.
-
-### 7.2 Dashboard Sections
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  PARENT DASHBOARD SPECIFICATION                                      │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  Section 1: Overview Card                                            │
-│  ├── Child name + photo                                             │
-│  ├── Current level (CEFR)                                           │
-│  ├── Weekly practice time (vs goal)                                 │
-│  ├── Current streak (days)                                          │
-│  └── Overall score trend (↑↓→)                                     │
-│                                                                      │
-│  Section 2: Weekly Activity                                          │
-│  ├── Bar chart: practice minutes per day (7 days)                   │
-│  ├── Conversations completed this week                              │
-│  ├── New words learned                                              │
-│  └── Compared to last week (% change)                               │
-│                                                                      │
-│  Section 3: Progress Chart                                           │
-│  ├── Line chart: overall score over 4 weeks                         │
-│  ├── Grammar score trend                                            │
-│  ├── Pronunciation score trend                                      │
-│  └── Fluency score trend                                            │
-│                                                                      │
-│  Section 4: Strengths & Improvements                                 │
-│  ├── Top 3 strengths (with examples)                                │
-│  ├── Top 3 areas to improve (with tips)                             │
-│  └── Teacher's note (if school license)                             │
-│                                                                      │
-│  Section 5: Recent Activity                                          │
-│  ├── List of recent conversations                                   │
-│  ├── Topic + score + duration                                       │
-│  └── Expandable: turn-by-turn transcript                            │
-│                                                                      │
-│  Section 6: Actions                                                  │
-│  ├── [📧 Send weekly report to Zalo]                                │
-│  ├── [📊 Download full report (PDF)]                                │
-│  ├── [⚙️ Settings (goals, notifications)]                           │
-│  └── [👨‍👩‍👧 Add another child]                                        │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### 7.3 Notification System
-
-```python
-NOTIFICATION_CONFIG = {
-    "weekly_report": {
-        "channel": "zalo",          # Primary channel for VN parents
-        "frequency": "weekly",      # Every Sunday 8 PM
-        "content": {
-            "practice_minutes": "int",
-            "conversations_completed": "int",
-            "new_words_learned": "int",
-            "score_change": "float",
-            "strengths": "List[str]",
-            "areas_to_improve": "List[str]",
-            "link_to_dashboard": "str"
-        }
-    },
-    "milestone_alert": {
-        "trigger": "streak == 7 or streak == 30 or streak == 100",
-        "channel": "zalo",
-        "content": "🎉 Minh đã luyện tập {streak} ngày liên tiếp!"
-    },
-    "grade_improvement": {
-        "trigger": "score increased > 10% in 2 weeks",
-        "channel": "zalo",
-        "content": "📈 Điểm phát âm của Minh đã tăng {improvement}%!"
-    },
-    "inactivity_alert": {
-        "trigger": "no practice for 3 days",
-        "channel": "zalo",
-        "content": "⏰ Minh chưa luyện tập 3 ngày. Nhắc con luyện tập nhé!"
-    }
-}
-```
-
----
-
-## 8. Feature F7: AI Video Avatar (Phase 3)
-
-### 8.1 Description
-
-Real-time AI video avatar that serves as conversation partner with lip-sync, facial expressions, and personality.
-
-### 8.2 Avatar Specifications
+### 9.2 Avatar Specifications
 
 ```python
 AVATAR_CONFIG = {
@@ -936,17 +984,20 @@ AVATAR_CONFIG = {
         "friendly_teacher_female": {
             "appearance": "Young Vietnamese woman, professional casual",
             "personality": "Warm, encouraging, patient",
-            "voice": "friendly_female"
+            "voice": "friendly_female",
+            "best_for": "All ages"
         },
         "friendly_teacher_male": {
             "appearance": "Young Vietnamese man, casual",
             "personality": "Enthusiastic, clear, supportive",
-            "voice": "friendly_male"
+            "voice": "friendly_male",
+            "best_for": "High school students"
         },
         "international_female": {
             "appearance": "Western woman, professional",
             "personality": "Professional, clear pronunciation",
-            "voice": "professional_female"
+            "voice": "professional_female",
+            "best_for": "IELTS/TOEIC prep"
         }
     }
 }
@@ -954,135 +1005,387 @@ AVATAR_CONFIG = {
 
 ---
 
-## 9. Feature F8: IELTS Mock Speaking Test (Phase 3)
+## 10. F9: IELTS Mock Speaking Test (Phase 3)
 
-### 9.1 Description
+### 10.1 IELTS Speaking Test Simulation
 
-Simulated IELTS Speaking test with band score prediction and detailed feedback.
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    IELTS SPEAKING TEST SIMULATION                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  PART 1: Introduction & Interview (4-5 minutes)                         │
+│  ├── Examiner asks familiar questions                                   │
+│  ├── Topics: home, family, work, studies, interests                     │
+│  ├── Response length: 2-3 sentences per question                       │
+│  └── Focus: Fluency, natural responses                                  │
+│                                                                          │
+│  PART 2: Individual Long Turn (3-4 minutes)                             │
+│  ├── Examiner gives cue card with topic                                 │
+│  ├── Student has 1 minute to prepare (notes allowed)                   │
+│  ├── Student speaks for 1-2 minutes                                     │
+│  ├── Timer shown on screen                                              │
+│  └── Focus: Extended speaking, organization, vocabulary                 │
+│                                                                          │
+│  PART 3: Two-Way Discussion (4-5 minutes)                               │
+│  ├── Examiner asks abstract questions related to Part 2 topic          │
+│  ├── Requires deeper analysis and opinion                               │
+│  ├── Response length: 3-5 sentences per question                       │
+│  └── Focus: Complex language, critical thinking                         │
+│                                                                          │
+│  SCORING (after test):                                                   │
+│  ├── Fluency & Coherence: Band 1-9                                     │
+│  ├── Lexical Resource: Band 1-9                                        │
+│  ├── Grammatical Range & Accuracy: Band 1-9                            │
+│  ├── Pronunciation: Band 1-9                                            │
+│  └── Overall Band: Average of 4 criteria                               │
+│                                                                          │
+│  FEEDBACK:                                                               │
+│  ├── Band score prediction (e.g., 6.0)                                  │
+│  ├── Detailed feedback per criterion                                    │
+│  ├── Specific examples from student's responses                        │
+│  ├── Improvement suggestions                                            │
+│  └── Practice recommendations                                           │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
-### 9.2 IELTS Scoring Rubric
+---
 
-```python
-IELTS_CRITERIA = {
-    "fluency_and_coherence": {
-        "weight": 0.25,
-        "bands": {
-            "9": "Speaks fluently with only rare repetition or self-correction",
-            "7": "Speaks at length without noticeable effort or loss of coherence",
-            "5": "Usually maintains flow but uses repetition, self-correction and/or slow speech",
-            "3": "Cannot respond without noticeable pauses; may repeat words"
-        }
-    },
-    "lexical_resource": {
-        "weight": 0.25,
-        "bands": {
-            "9": "Uses vocabulary with full flexibility and precision",
-            "7": "Uses vocabulary resourcefully to discuss a variety of topics",
-            "5": "Manages to talk about familiar topics but vocabulary limited",
-            "3": "Only uses isolated words or memorized phrases"
-        }
-    },
-    "grammatical_range_and_accuracy": {
-        "weight": 0.25,
-        "bands": {
-            "9": "Uses a full range of structures naturally and appropriately",
-            "7": "Uses a range of complex structures with flexibility",
-            "5": "Uses a limited range of complex structures but with limited flexibility",
-            "3": "Cannot use basic sentence forms"
-        }
-    },
-    "pronunciation": {
-        "weight": 0.25,
-        "bands": {
-            "9": "Uses a full range of pronunciation features with precision",
-            "7": "Shows all positive features; uses some less common features",
-            "5": "Shows some effective use of features but control is limited",
-            "3": "Speech is often unintelligible"
-        }
+## 11. F10: Homework Help (Phase 3)
+
+### 11.1 How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    HOMEWORK HELP FLOW                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  STEP 1: Student takes photo of homework                                │
+│  ├── Uses phone camera within app                                       │
+│  ├── Auto-crop and enhance image                                        │
+│  └── Support: handwritten or printed text                               │
+│                                                                          │
+│  STEP 2: OCR + AI Vision                                                │
+│  ├── Extract text from image (Vietnamese OCR)                           │
+│  ├── Identify question type:                                            │
+│  │   ├── Fill-in-the-blank                                              │
+│  │   ├── Multiple choice                                                │
+│  │   ├── Short answer                                                   │
+│  │   ├── Essay / paragraph                                              │
+│  │   └── Grammar exercise                                               │
+│  ├── Parse exercise structure                                           │
+│  └── Identify the specific question being asked                        │
+│                                                                          │
+│  STEP 3: AI generates explanation                                       │
+│  ├── Step-by-step solution (in Vietnamese)                              │
+│  ├── Grammar rule explanation                                           │
+│  ├── Why this answer is correct                                         │
+│  ├── Similar examples                                                   │
+│  └── Practice problems (generated by AI)                               │
+│                                                                          │
+│  STEP 4: Interactive follow-up                                          │
+│  ├── Student can ask: "Tại sao dùng 'went' mà không phải 'goed'?"     │
+│  ├── AI explains in Vietnamese with examples                           │
+│  └── Student can practice similar problems                             │
+│                                                                          │
+│  IMPORTANT: The AI explains HOW to solve, not just the answer           │
+│  ├── "Đây là bài về thì quá khứ đơn..."                              │
+│  ├── "Quy tắc: động từ 'go' → quá khứ là 'went' (bất quy tắc)"      │
+│  └── KHÔNG chỉ cho đáp án mà hướng dẫn cách tư duy                   │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 12. Screen-by-Screen Specifications
+
+### 12.1 Landing Page (/)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  LANDING PAGE                                                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Section 1: Hero                                                        │
+│  ├── Headline: "Luyện nói tiếng Anh với AI — mọi lúc, mọi nơi"        │
+│  ├── Subtitle: "80% học sinh Việt Nam sợ nói tiếng Anh.               │
+│  │              Chúng tôi thay đổi điều đó."                           │
+│  ├── CTA: "Thử Miễn Phí" (large green button)                         │
+│  └── Hero image: Student talking to phone with AI avatar               │
+│                                                                          │
+│  Section 2: How It Works                                                │
+│  ├── Step 1: "Chọn chủ đề" (icon: 📱)                                 │
+│  ├── Step 2: "Nói với AI" (icon: 🎤)                                  │
+│  ├── Step 3: "Nhận phản hồi" (icon: 📊)                               │
+│  └── Step 4: "Cải thiện mỗi ngày" (icon: 📈)                          │
+│                                                                          │
+│  Section 3: Features                                                    │
+│  ├── "Luyện nói 24/7" — AI luôn sẵn sàng                               │
+│  ├── "Sửa ngữ pháp tức thì" — Phản hồi ngay khi bạn nói              │
+│  ├── "Chấm phát âm chi tiết" — Từng từ một                            │
+│  └── "50+ chủ đề" — Từ chào hỏi đến IELTS                            │
+│                                                                          │
+│  Section 4: Social Proof                                                │
+│  ├── "10,000+ học sinh đang sử dụng"                                   │
+│  ├── Parent testimonials                                                │
+│  └── Teacher endorsements                                               │
+│                                                                          │
+│  Section 5: Pricing                                                     │
+│  ├── Free: "Miễn phí" — 3 cuộc hội thoại/ngày                         │
+│  ├── Premium: "99,000đ/tháng" — Không giới hạn                         │
+│  └── Premium+: "199,000đ/tháng" — Avatar + IELTS                      │
+│                                                                          │
+│  Section 6: CTA                                                         │
+│  └── "Bắt đầu luyện tập miễn phí ngay!" (large button)               │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 12.2 Login Page (/login)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  LOGIN PAGE                                                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │                    🗣️ AI English Coach                           │    │
+│  │                                                                  │    │
+│  │                    ┌─────────────────────┐                       │    │
+│  │                    │ 🇻🇳 +84              │                       │    │
+│  │                    │ 0902 xxx xxx        │                       │    │
+│  │                    └─────────────────────┘                       │    │
+│  │                                                                  │    │
+│  │                    [Gửi mã OTP]                                  │    │
+│  │                                                                  │    │
+│  │                    ─── hoặc ───                                  │    │
+│  │                                                                  │    │
+│  │                    [📱 Tiếp tục với Zalo]                        │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  After OTP sent:                                                        │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                  │    │
+│  │                    Nhập mã OTP đã gửi đến                       │    │
+│  │                    0902 xxx xxx                                  │    │
+│  │                                                                  │    │
+│  │                    ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐        │    │
+│  │                    │ 1 │ │ 2 │ │ 3 │ │ 4 │ │ 5 │ │ 6 │        │    │
+│  │                    └───┘ └───┘ └───┘ └───┘ └───┘ └───┘        │    │
+│  │                                                                  │    │
+│  │                    [Xác nhận]                                    │    │
+│  │                                                                  │    │
+│  │                    Gửi lại mã (00:45)                            │    │
+│  │                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 12.3 Dashboard (/dashboard)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  DASHBOARD                                                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  HEADER                                                          │    │
+│  │  Xin chào, Minh! 👋                              [🔔] [⚙️]     │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  STREAK & LEVEL                                                  │    │
+│  │                                                                  │    │
+│  │  🔥 7 ngày liên tiếp    │    🌲 Level 3 — Cây Non              │    │
+│  │  ████████████░░░ 300 XP │    ████████████░░░ 600 XP             │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  QUICK START                                                     │    │
+│  │                                                                  │    │
+│  │  ┌─────────────────────────────────────────────────────────┐    │    │
+│  │  │  🎯 Tiếp tục luyện                                      │    │    │
+│  │  │  Ordering Food — Turn 5/12                               │    │    │
+│  │  │  [Tiếp tục ▶]                                            │    │    │
+│  │  └─────────────────────────────────────────────────────────┘    │    │
+│  │                                                                  │    │
+│  │  Hoặc chọn chủ đề mới:                                          │    │
+│  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐                  │    │
+│  │  │ 🍜     │ │ 🏫     │ │ ✈️     │ │ 💼     │                  │    │
+│  │  │ Đồ ăn │ │ Trường │ │ Du lịch│ │ Phỏng │                  │    │
+│  │  │ học    │ │        │ │        │ │ vấn   │                  │    │
+│  │  └────────┘ └────────┘ └────────┘ └────────┘                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  TODAY'S STATS                                                   │    │
+│  │                                                                  │    │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │    │
+│  │  │ 15 min   │ │  2       │ │  5       │ │  72/100  │          │    │
+│  │  │ Luyện tập│ │ Hội thoại│ │ Từ mới   │ │ Điểm TB  │          │    │
+│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  REVIEW TODAY                                                    │    │
+│  │                                                                  │    │
+│  │  📚 12 từ cần ôn hôm nay                              [Ôn ▶]  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  BOTTOM NAV                                                      │    │
+│  │  [🏠 Home]  [📝 Practice]  [📚 Vocab]  [📊 Progress]  [👤]     │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 13. API Specifications
+
+### 13.1 Authentication API
+
+```yaml
+POST /api/v1/auth/phone/send-otp:
+  Request:
+    { "phone": "0902123456" }
+  Response (200):
+    { "message": "OTP sent", "phone": "0902xxx", "expires_in": 300 }
+  Response (429):
+    { "detail": "Too many OTP requests. Try again in 5 minutes." }
+
+POST /api/v1/auth/phone/verify:
+  Request:
+    { "phone": "0902123456", "otp": "123456" }
+  Response (200):
+    { "access_token": "eyJ...", "refresh_token": "eyJ...", "token_type": "bearer" }
+  Response (400):
+    { "detail": "Invalid or expired OTP" }
+
+POST /api/v1/auth/refresh:
+  Request:
+    { "refresh_token": "eyJ..." }
+  Response (200):
+    { "access_token": "eyJ...", "token_type": "bearer" }
+```
+
+### 13.2 Conversation API
+
+```yaml
+POST /api/v1/conversations/start:
+  Headers: { Authorization: "Bearer <token>" }
+  Request:
+    { "topic_id": "ordering-food", "voice": "friendly_female", "speed": 0.9 }
+  Response (200):
+    {
+      "session_id": "uuid",
+      "topic_id": "ordering-food",
+      "ai_greeting": "Good evening! Welcome to Pho 24...",
+      "ai_audio_url": "https://minio.../greeting.mp3"
     }
-}
+
+WS /ws/v1/conversations/{session_id}:
+  See WebSocket Protocol section above.
+
+GET /api/v1/conversations/{session_id}:
+  Headers: { Authorization: "Bearer <token>" }
+  Response (200):
+    {
+      "id": "uuid",
+      "topic_id": "ordering-food",
+      "status": "completed",
+      "started_at": "2026-05-30T10:00:00Z",
+      "ended_at": "2026-05-30T10:12:00Z",
+      "duration_seconds": 720,
+      "total_turns": 10,
+      "avg_grammar_score": 72.5,
+      "avg_pronunciation_score": 68.0,
+      "overall_score": 70.2,
+      "turns": [...]
+    }
+
+GET /api/v1/conversations/{session_id}/feedback:
+  Response (200):
+    {
+      "overall_score": 70.2,
+      "grammar": { "score": 72.5, "top_errors": [...] },
+      "pronunciation": { "score": 68.0, "problem_sounds": [...] },
+      "vocabulary": { "new_words": 5, "words": [...] },
+      "summary_vi": "Bạn đã làm tốt! Tiếp tục luyện tập nhé.",
+      "strengths": ["Vocabulary", "Confidence"],
+      "improvements": ["Past tense", "Final consonants"]
+    }
 ```
 
 ---
 
-## 10. Feature F9: Homework Help (Phase 3)
+## 14. Error Handling
 
-### 10.1 Description
-
-Photo-based homework help where students snap a photo of their English homework and get AI explanations.
-
-### 10.2 Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  HOMEWORK HELP FLOW                                                  │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  1. Student takes photo of homework                                  │
-│       │                                                              │
-│       ▼                                                              │
-│  2. OCR + AI Vision processes image                                  │
-│       ├── Extract text (Vietnamese handwriting OCR)                 │
-│       ├── Identify question type (grammar, vocab, reading, etc.)    │
-│       └── Parse exercise format (fill-in, multiple choice, essay)   │
-│       │                                                              │
-│       ▼                                                              │
-│  3. AI generates explanation                                         │
-│       ├── Step-by-step solution (in Vietnamese)                     │
-│       ├── Grammar rule explanation                                  │
-│       ├── Similar examples                                          │
-│       └── Practice problems                                         │
-│       │                                                              │
-│       ▼                                                              │
-│  4. Student can ask follow-up questions                              │
-│       └── "Tại sao dùng 'went' mà không phải 'goed'?"             │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
+See [system-architecture.md](system-architecture.md) Section 15 for complete error handling matrix.
 
 ---
 
-## 11. Gamification System
+## 15. Edge Cases
 
-### 11.1 XP & Leveling
-
-```python
-XP_REWARDS = {
-    "complete_conversation": 50,
-    "perfect_grammar_turn": 10,
-    "new_vocabulary_learned": 5,
-    "daily_streak_bonus": 20,          # Per day of streak
-    "weekly_goal_met": 100,
-    "pronunciation_improvement": 15,    # Score improved vs last time
-}
-
-LEVELS = [
-    {"level": 1, "xp_required": 0, "title": "Seed", "title_vi": "Hạt Giống"},
-    {"level": 2, "xp_required": 100, "title": "Sprout", "title_vi": "Mầm Non"},
-    {"level": 3, "xp_required": 300, "title": "Sapling", "title_vi": "Cây Non"},
-    {"level": 4, "xp_required": 600, "title": "Tree", "title_vi": "Cây Trưởng Thành"},
-    {"level": 5, "xp_required": 1000, "title": "Forest", "title_vi": "Khu Rừng"},
-    {"level": 6, "xp_required": 1500, "title": "Mountain", "title_vi": "Ngọn Núi"},
-    {"level": 7, "xp_required": 2500, "title": "Sky", "title_vi": "Bầu Trời"},
-    {"level": 8, "xp_required": 4000, "title": "Star", "title_vi": "Ngôi Sao"},
-    {"level": 9, "xp_required": 6000, "title": "Galaxy", "title_vi": "Thiên Hà"},
-    {"level": 10, "xp_required": 10000, "title": "Universe", "title_vi": "Vũ Trụ"}
-]
 ```
-
-### 11.2 Achievements
-
-```python
-ACHIEVEMENTS = [
-    {"id": "first_conversation", "name_vi": "Bước Đầu Tiên", "condition": "Complete 1 conversation"},
-    {"id": "week_streak", "name_vi": "7 Ngày Liên Tiếp", "condition": "7-day practice streak"},
-    {"id": "month_streak", "name_vi": "30 Ngày Kiên Trì", "condition": "30-day practice streak"},
-    {"id": "100_conversations", "name_vi": "Trăm Trận", "condition": "Complete 100 conversations"},
-    {"id": "grammar_master", "name_vi": "Bậc Thầy Ngữ Pháp", "condition": "Grammar score > 90 for 10 sessions"},
-    {"id": "pronunciation_pro", "name_vi": "Phát Âm Chuẩn", "condition": "Pronunciation score > 85 for 10 sessions"},
-    {"id": "vocab_collector", "name_vi": "Sưu Tập Từ Vựng", "condition": "Learn 500 words"},
-    {"id": "topic_explorer", "name_vi": "Khám Phá Chủ Đề", "condition": "Try 20 different topics"},
-    {"id": "night_owl", "name_vi": "Cú Đêm", "condition": "Practice after 10 PM 10 times"},
-    {"id": "early_bird", "name_vi": "Chim Sớm", "condition": "Practice before 7 AM 10 times"}
-]
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    EDGE CASES                                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  AUDIO EDGE CASES:                                                      │
+│  ├── Student speaks Vietnamese instead of English                       │
+│  │   → ASR detects language, respond: "Let's try in English!"          │
+│  ├── Student speaks too quietly                                         │
+│  │   → ASR low confidence, ask to repeat                               │
+│  ├── Background noise (TV, traffic)                                     │
+│  │   → Noise suppression + lower confidence threshold                  │
+│  ├── Student coughs or makes non-speech sounds                         │
+│  │   → VAD filters out non-speech, don't process                      │
+│  ├── Student plays music while practicing                              │
+│  │   → Background audio affects ASR, prompt to find quiet place        │
+│  └── Very long silence (student thinking)                              │
+│      → After 10s, gentle prompt: "Take your time!"                     │
+│      → After 30s, offer: "Would you like a hint?"                     │
+│                                                                          │
+│  CONVERSATION EDGE CASES:                                               │
+│  ├── Student gives very short answers ("yes", "no")                    │
+│  │   → AI asks follow-up to encourage longer responses                │
+│  ├── Student repeats same answer                                        │
+│  │   → AI acknowledges, gently introduces new topic                   │
+│  ├── Student asks question in Vietnamese                                │
+│  │   → AI responds in English, acknowledges they can use VN if stuck  │
+│  ├── Student goes off-topic                                             │
+│  │   → AI acknowledges, gently steers back to topic                   │
+│  ├── Student asks about non-English topics (math, science)             │
+│  │   → AI: "Interesting! Let's practice talking about that in English" │
+│  └── Student is rude or uses inappropriate language                    │
+│      → AI responds politely, doesn't engage with rudeness              │
+│                                                                          │
+│  TECHNICAL EDGE CASES:                                                  │
+│  ├── Internet connection drops mid-conversation                        │
+│  │   → Auto-reconnect (3 attempts), preserve conversation state       │
+│  ├── Browser tab becomes inactive                                       │
+│  │   → Pause audio recording, resume when tab active again            │
+│  ├── Multiple devices logged in same account                           │
+│  │   → Allow, but only 1 active conversation at a time                │
+│  ├── Student changes phone orientation mid-conversation                │
+│  │   → Responsive layout adapts, conversation continues               │
+│  └── Battery dies mid-conversation                                     │
+│      → Conversation state saved server-side, resume on next login      │
+│                                                                          │
+│  PAYMENT EDGE CASES:                                                    │
+│  ├── Payment succeeds but webhook delayed                              │
+│  │   → Poll payment status every 5s for 2 min                        │
+│  ├── Subscription expires mid-conversation                             │
+│  │   → Allow current session to complete, limit next session          │
+│  └── Student tries to use premium features on free plan                │
+│      → Show upgrade prompt with clear pricing                          │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
