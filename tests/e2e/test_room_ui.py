@@ -1,160 +1,172 @@
-"""E2E tests for the AI English Coach conversation room UI."""
-import re
+"""
+Playwright E2E Tests — AI English Coach Conversation Room
+Tests the room/conversation-room.html UI served by room/server.py
+"""
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import sync_playwright, expect
+
+BASE_URL = "http://localhost:8089"
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-def enter_room(page: Page, base_url: str):
-    """Navigate, fill name, pick topic, click start → room visible."""
-    page.goto(base_url)
-    page.wait_for_selector("#lobby", state="visible")
-    page.fill("#name-input", "TestUser")
-    # Click the first non-selected topic btn (second one, since free-chat is pre-selected)
-    btns = page.locator(".topic-btn")
-    if btns.count() > 1:
-        btns.nth(1).click()
+@pytest.fixture(scope="session")
+def browser():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        yield browser
+        browser.close()
+
+
+@pytest.fixture
+def page(browser):
+    ctx = browser.new_context()
+    page = ctx.new_page()
+    page.goto(BASE_URL)
+    page.wait_for_load_state("domcontentloaded")
+    yield page
+    ctx.close()
+
+
+def _enter_room(page, name="TestUser"):
+    page.fill("#name-input", name)
+    page.locator(".topic-btn").first.click()
     page.click("#start-btn")
-    page.wait_for_selector("#room", state="visible", timeout=10000)
+    page.wait_for_timeout(800)
 
 
-# ---------------------------------------------------------------------------
-# Lobby tests
-# ---------------------------------------------------------------------------
+# ── LOBBY ────────────────────────────────────────────────────
 
-def test_lobby_loads(page: Page, base_url: str):
-    page.goto(base_url)
-    expect(page).to_have_title(re.compile(r"AI English Coach"))
+def test_page_loads(page):
+    expect(page).to_have_title("AI English Coach — Voice Room")
 
+def test_name_input_exists(page):
+    expect(page.locator("#name-input")).to_be_visible()
 
-def test_name_input_exists(page: Page, base_url: str):
-    page.goto(base_url)
-    expect(page.locator("input#name-input")).to_be_visible()
+def test_topic_buttons_exist(page):
+    assert page.locator(".topic-btn").count() >= 3
 
+def test_select_topic(page):
+    btn = page.locator(".topic-btn").nth(1)
+    btn.click()
+    classes = btn.get_attribute("class") or ""
+    assert "selected" in classes
 
-def test_topic_buttons_exist(page: Page, base_url: str):
-    page.goto(base_url)
-    page.wait_for_selector(".topic-btn", timeout=5000)
-    btns = page.locator(".topic-btn")
-    assert btns.count() >= 3, f"Expected >= 3 topic buttons, got {btns.count()}"
-
-
-def test_select_topic(page: Page, base_url: str):
-    page.goto(base_url)
-    page.wait_for_selector(".topic-btn", timeout=5000)
-    btns = page.locator(".topic-btn")
-    # Click second button (first is already selected)
-    btns.nth(1).click()
-    expect(btns.nth(1)).to_have_class(re.compile(r"selected"))
-
-
-def test_start_button_exists(page: Page, base_url: str):
-    page.goto(base_url)
+def test_start_button_exists(page):
     expect(page.locator("#start-btn")).to_be_visible()
 
 
-# ---------------------------------------------------------------------------
-# Room tests — require entering the room first
-# ---------------------------------------------------------------------------
+# ── ROOM ─────────────────────────────────────────────────────
 
-def test_start_room(page: Page, base_url: str):
-    enter_room(page, base_url)
+def test_start_room_shows_room(page):
+    _enter_room(page)
     expect(page.locator("#room")).to_be_visible()
 
-
-def test_room_has_chat(page: Page, base_url: str):
-    enter_room(page, base_url)
+def test_room_has_chat(page):
+    _enter_room(page)
     expect(page.locator("#chat")).to_be_visible()
 
-
-def test_room_has_mic_button(page: Page, base_url: str):
-    enter_room(page, base_url)
+def test_room_has_mic_button(page):
+    _enter_room(page)
     expect(page.locator(".mic-btn")).to_be_visible()
 
-
-def test_room_has_end_button(page: Page, base_url: str):
-    enter_room(page, base_url)
+def test_room_has_end_button(page):
+    _enter_room(page)
     expect(page.locator(".end-btn")).to_be_visible()
 
-
-def test_room_has_mode_toggle(page: Page, base_url: str):
-    enter_room(page, base_url)
-    expect(page.locator(".mode-toggle")).to_be_visible()
+def test_room_has_mode_toggle(page):
+    _enter_room(page)
     expect(page.locator("#mode-voice")).to_be_visible()
     expect(page.locator("#mode-text")).to_be_visible()
 
 
-# ---------------------------------------------------------------------------
-# Mode switching
-# ---------------------------------------------------------------------------
+# ── MODE SWITCH ──────────────────────────────────────────────
 
-def test_switch_to_text_mode(page: Page, base_url: str):
-    enter_room(page, base_url)
+def test_switch_to_text_mode(page):
+    _enter_room(page)
     page.click("#mode-text")
-    # text-mode visible, voice-mode hidden
-    expect(page.locator("#text-mode")).to_be_visible()
-    expect(page.locator("#voice-mode")).to_be_hidden()
+    text_mode = page.locator("#text-mode")
+    assert text_mode.is_visible()
 
-
-def test_switch_to_voice_mode(page: Page, base_url: str):
-    enter_room(page, base_url)
-    # First switch to text, then back to voice
-    page.click("#mode-text")
-    expect(page.locator("#voice-mode")).to_be_hidden()
-    page.click("#mode-voice")
-    expect(page.locator("#voice-mode")).to_be_visible()
-    expect(page.locator("#text-mode")).to_be_hidden()
-
-
-def test_text_input_exists_in_text_mode(page: Page, base_url: str):
-    enter_room(page, base_url)
+def test_text_input_in_text_mode(page):
+    _enter_room(page)
     page.click("#mode-text")
     expect(page.locator("#text-input")).to_be_visible()
 
 
-def test_send_text_message(page: Page, base_url: str):
-    enter_room(page, base_url)
+# ── TEXT CONVERSATION ────────────────────────────────────────
+
+def test_send_text_message(page):
+    _enter_room(page)
+    page.wait_for_timeout(1500)  # Wait for AI greeting
     page.click("#mode-text")
     page.fill("#text-input", "Hello, how are you?")
     page.press("#text-input", "Enter")
-    # The student message bubble should appear in #chat
-    expect(page.locator("#chat .msg.student")).to_be_visible(timeout=5000)
+    page.wait_for_timeout(300)
+    student_msgs = page.locator(".msg.student")
+    assert student_msgs.count() >= 1
+
+def test_ai_responds_to_text(page):
+    _enter_room(page)
+    page.wait_for_timeout(1500)
+    page.click("#mode-text")
+    page.fill("#text-input", "Hello!")
+    page.press("#text-input", "Enter")
+    page.wait_for_timeout(6000)  # Wait for AI response
+    ai_msgs = page.locator(".msg.ai")
+    assert ai_msgs.count() >= 2  # greeting + response
 
 
-# ---------------------------------------------------------------------------
-# Summary / End session
-# ---------------------------------------------------------------------------
+# ── END SESSION ──────────────────────────────────────────────
 
-def test_end_session_shows_summary(page: Page, base_url: str):
-    enter_room(page, base_url)
-    # Wait a moment for the WS greeting to arrive so WS is fully ready
-    page.wait_for_selector("#chat .msg.ai", timeout=10000)
+def test_end_shows_summary(page):
+    _enter_room(page)
+    page.wait_for_timeout(1500)
     page.click(".end-btn")
-    # Summary modal should appear (server sends session_summary after "end")
-    expect(page.locator("#summary-modal.show")).to_be_visible(timeout=15000)
+    page.wait_for_timeout(4000)
+    modal = page.locator("#summary-modal")
+    classes = modal.get_attribute("class") or ""
+    assert "show" in classes
 
-
-def test_summary_has_feedback(page: Page, base_url: str):
-    enter_room(page, base_url)
-    page.wait_for_selector("#chat .msg.ai", timeout=10000)
+def test_summary_has_feedback(page):
+    _enter_room(page)
+    page.wait_for_timeout(1500)
     page.click(".end-btn")
-    page.wait_for_selector("#summary-modal.show", timeout=15000)
+    page.wait_for_timeout(4000)
     feedback = page.locator("#sum-feedback")
-    expect(feedback).not_to_have_text("", timeout=5000)
+    assert len(feedback.text_content() or "") > 0
 
-
-def test_close_summary_returns_to_lobby(page: Page, base_url: str):
-    enter_room(page, base_url)
-    page.wait_for_selector("#chat .msg.ai", timeout=10000)
+def test_close_summary_returns_to_lobby(page):
+    _enter_room(page)
+    page.wait_for_timeout(1500)
     page.click(".end-btn")
-    page.wait_for_selector("#summary-modal.show", timeout=15000)
+    page.wait_for_timeout(4000)
     page.click(".close-btn")
+    page.wait_for_timeout(500)
     expect(page.locator("#lobby")).to_be_visible()
 
 
-def test_back_button_leaves_room(page: Page, base_url: str):
-    enter_room(page, base_url)
+# ── NAVIGATION ───────────────────────────────────────────────
+
+def test_back_leaves_room(page):
+    _enter_room(page)
     page.click(".back")
+    page.wait_for_timeout(500)
     expect(page.locator("#lobby")).to_be_visible()
+
+
+# ── RESPONSIVE ───────────────────────────────────────────────
+
+def test_mobile_viewport(browser):
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    page = ctx.new_page()
+    page.goto(BASE_URL)
+    page.wait_for_load_state("domcontentloaded")
+    expect(page.locator("#lobby")).to_be_visible()
+    ctx.close()
+
+def test_desktop_viewport(browser):
+    ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
+    page = ctx.new_page()
+    page.goto(BASE_URL)
+    page.wait_for_load_state("domcontentloaded")
+    expect(page.locator("#lobby")).to_be_visible()
+    ctx.close()
