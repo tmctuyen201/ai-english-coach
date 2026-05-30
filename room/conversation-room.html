@@ -12,127 +12,283 @@
   --border:#27272a;--border2:#3f3f46;
   --text:#fafafa;--text2:#a1a1aa;--text3:#71717a;
   --accent:#6366f1;--accent2:#818cf8;--accent3:#a5b4fc;
-  --green:#22c55e;--green2:#4ade80;
-  --red:#ef4444;--yellow:#f59e0b;
+  --cyan:#06b6d4;
+  --green:#22c55e;--red:#ef4444;--yellow:#f59e0b;
   --gradient:linear-gradient(135deg,#6366f1,#06b6d4);
-  --glow:0 0 40px rgba(99,102,241,0.12);
-  --radius:16px;--radius-sm:10px;--radius-xs:6px;
+  --radius:12px;--radius-sm:8px;--radius-pill:100px;
 }
 html,body{height:100%;overflow:hidden}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text)}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
 
-/* ═══ LOBBY ═══ */
-#lobby{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:32px;position:relative;overflow:hidden}
-#lobby::before{content:'';position:absolute;top:-300px;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 60%);pointer-events:none}
-#lobby>*{position:relative;z-index:1}
-#lobby .logo{font-size:14px;color:var(--text3);margin-bottom:40px;display:flex;align-items:center;gap:8px}
-#lobby .logo span{font-weight:600;color:var(--text2)}
-#lobby h1{font-size:clamp(28px,5vw,40px);font-weight:700;text-align:center;margin-bottom:8px;letter-spacing:-0.02em}
-#lobby h1 em{font-style:normal;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-#lobby .sub{font-size:15px;color:var(--text2);text-align:center;margin-bottom:36px}
-#lobby input{width:100%;max-width:380px;padding:14px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:15px;font-family:inherit;outline:none;text-align:center;transition:all 0.2s}
-#lobby input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,0.12)}
-#lobby input::placeholder{color:var(--text3)}
+/* Animated background */
+.bg-anim{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.bg-anim::before,.bg-anim::after{content:'';position:absolute;border-radius:50%;filter:blur(120px);opacity:.12;animation:float 20s ease-in-out infinite}
+.bg-anim::before{width:600px;height:600px;background:#6366f1;top:-200px;left:-100px}
+.bg-anim::after{width:500px;height:500px;background:#06b6d4;bottom:-200px;right:-100px;animation-delay:-10s}
+@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,40px)}}
 
-.topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;width:100%;max-width:520px;margin-bottom:28px}
-.topic-btn{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:20px 12px;cursor:pointer;text-align:center;transition:all 0.2s}
-.topic-btn:hover{border-color:var(--accent);background:rgba(99,102,241,0.05)}
-.topic-btn.selected{border-color:var(--accent);background:rgba(99,102,241,0.08);box-shadow:0 0 20px rgba(99,102,241,0.1)}
-.topic-btn .icon{font-size:28px;display:block;margin-bottom:8px}
-.topic-btn .name{font-size:13px;font-weight:600;color:var(--text)}
-.topic-btn .level{font-size:11px;color:var(--text3);margin-top:3px}
+/* ═══════════ LOBBY ═══════════ */
+#lobby{display:flex;flex-direction:column;align-items:center;height:100vh;position:relative;z-index:1;overflow-y:auto;padding:40px 20px 60px}
 
-#start-btn{padding:14px 48px;background:var(--gradient);border:none;border-radius:var(--radius-sm);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.2s}
-#start-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(99,102,241,0.3)}
+.lobby-header{text-align:center;margin-bottom:32px}
+.lobby-logo{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text3);margin-bottom:20px}
+.lobby-logo span{font-weight:600;color:var(--text2)}
+.lobby-logo .dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.lobby-header h1{font-size:clamp(26px,5vw,36px);font-weight:800;letter-spacing:-.03em;line-height:1.2;margin-bottom:10px}
+.lobby-header h1 em{font-style:normal;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lobby-header p{font-size:15px;color:var(--text2);max-width:400px;margin:0 auto}
+
+/* Name input */
+.name-field{position:relative;width:100%;max-width:360px;margin-bottom:32px}
+.name-field .icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.5}
+.name-field input{width:100%;padding:14px 16px 14px 46px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:15px;font-family:inherit;outline:none;transition:border .2s,box-shadow .2s}
+.name-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.name-field input::placeholder{color:var(--text3)}
+
+/* Quick start */
+.quick-start{display:flex;align-items:center;gap:8px;padding:10px 24px;background:transparent;border:1.5px dashed var(--border2);border-radius:var(--radius-pill);color:var(--text2);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;transition:all .2s;margin-bottom:36px}
+.quick-start:hover{border-color:var(--accent);color:var(--accent2);background:rgba(99,102,241,.04)}
+.quick-start .shuffle{font-size:16px}
+
+/* Topics grid */
+.section-label{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;width:100%;max-width:640px}
+.topics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;width:100%;max-width:640px;margin-bottom:36px}
+.topic-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.topic-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.topic-card.selected{border-color:var(--accent);background:rgba(99,102,241,.06);box-shadow:0 0 24px rgba(99,102,241,.1)}
+.topic-card .top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.topic-card .t-icon{font-size:28px}
+.topic-card .level-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:var(--radius-pill);background:rgba(99,102,241,.15);color:var(--accent2);letter-spacing:.03em}
+.topic-card .level-badge.beginner{background:rgba(34,197,94,.12);color:var(--green)}
+.topic-card .level-badge.intermediate{background:rgba(245,158,11,.12);color:var(--yellow)}
+.topic-card .level-badge.advanced{background:rgba(239,68,68,.12);color:var(--red)}
+.topic-card .t-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.topic-card .t-desc{font-size:12px;color:var(--text3);line-height:1.4;margin-bottom:10px}
+.topic-card .t-meta{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.topic-card .selected-check{position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;background:var(--gradient);display:none;align-items:center;justify-content:center;font-size:12px}
+.topic-card.selected .selected-check{display:flex}
+
+/* Start button */
+.start-btn-wrap{margin-bottom:40px}
+#start-btn{padding:16px 56px;background:var(--gradient);border:none;border-radius:var(--radius-pill);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(99,102,241,.25)}
+#start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(99,102,241,.4)}
 #start-btn:active{transform:translateY(0)}
+#start-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 
-/* ═══ ROOM ═══ */
-#room{display:none;flex-direction:column;height:100vh;background:var(--bg)}
+/* Recent sessions */
+.recent-section{width:100%;max-width:640px}
+.recent-section .section-label{margin-bottom:10px}
+.recent-list{display:flex;flex-direction:column;gap:8px}
+.recent-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .2s}
+.recent-item:hover{border-color:var(--border2);background:var(--bg3)}
+.recent-item .ri-icon{font-size:22px}
+.recent-item .ri-info{flex:1}
+.recent-item .ri-topic{font-size:13px;font-weight:600}
+.recent-item .ri-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.recent-item .ri-score{font-size:13px;font-weight:700;padding:4px 10px;border-radius:var(--radius-pill)}
+.recent-item .ri-score.high{background:rgba(34,197,94,.12);color:var(--green)}
+.recent-item .ri-score.mid{background:rgba(245,158,11,.12);color:var(--yellow)}
+.recent-empty{font-size:13px;color:var(--text3);text-align:center;padding:20px}
 
-/* Top bar */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);min-height:56px}
-.topbar-left{display:flex;align-items:center;gap:12px}
-.topbar-back{width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+/* ═══════════ ROOM ═══════════ */
+#room{display:none;flex-direction:column;height:100vh;background:var(--bg);position:relative;z-index:1}
+
+/* Topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(17,17,20,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);min-height:52px;z-index:10}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-back{width:34px;height:34px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .topbar-back:hover{border-color:var(--accent);color:var(--text)}
-.topbar-info .topic{font-size:14px;font-weight:600}
-.topbar-info .meta{font-size:11px;color:var(--text3);margin-top:2px}
-.topbar-right{display:flex;align-items:center;gap:10px}
-.topbar-turns{font-size:12px;color:var(--text3);padding:4px 10px;background:var(--bg3);border-radius:100px}
-.topbar-end{padding:8px 16px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;color:var(--red);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.2s}
-.topbar-end:hover{background:rgba(239,68,68,0.2)}
+.topbar-info .tb-topic{font-size:13px;font-weight:600}
+.topbar-info .tb-meta{font-size:11px;color:var(--text3)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.topbar-pill{font-size:11px;color:var(--text3);padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-pill);display:flex;align-items:center;gap:4px}
+.topbar-pill .dot{width:5px;height:5px;background:var(--green);border-radius:50%}
+.topbar-end{padding:6px 14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-sm);color:var(--red);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
+.topbar-end:hover{background:rgba(239,68,68,.2)}
 
-/* Chat */
-.chat{flex:1;overflow-y:auto;padding:20px;scroll-behavior:smooth;display:flex;flex-direction:column;gap:4px}
-.msg{max-width:82%;animation:msg-in 0.35s ease}
-.msg.ai{align-self:flex-start}
-.msg.student{align-self:flex-end}
+/* Chat area */
+.chat{flex:1;overflow-y:auto;padding:16px;scroll-behavior:smooth;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+
+/* Messages */
+.msg{max-width:85%;animation:msg-in .3s ease}
+.msg.ai{align-self:flex-start;display:flex;gap:10px;align-items:flex-start}
+.msg.ai .avatar{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:2px}
+.msg.ai .bubble{background:var(--bg2);border:1px solid var(--border);border-radius:4px var(--radius) var(--radius) var(--radius);padding:12px 16px;font-size:14px;line-height:1.65;color:var(--text)}
+.msg.student{align-self:flex-end;position:relative}
+.msg.student .bubble{background:var(--gradient);color:#fff;border-radius:var(--radius) var(--radius) 4px var(--radius);padding:12px 16px;font-size:14px;line-height:1.65}
+.msg.student .msg-row{display:flex;align-items:center;gap:8px;justify-content:flex-end}
 .msg .label{font-size:11px;color:var(--text3);margin-bottom:4px;padding:0 4px}
 .msg.student .label{text-align:right}
-.msg .bubble{padding:12px 16px;font-size:14px;line-height:1.65}
-.msg.ai .bubble{background:var(--bg3);border:1px solid var(--border);border-radius:4px 16px 16px 16px}
-.msg.student .bubble{background:var(--gradient);color:#fff;border-radius:16px 16px 4px 16px}
 
-.typing{display:flex;gap:5px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:4px 16px 16px 16px;width:fit-content;margin-bottom:8px}
-.typing span{width:6px;height:6px;background:var(--text3);border-radius:50%;animation:bounce 1.4s infinite}
-.typing span:nth-child(2){animation-delay:.2s}
-.typing span:nth-child(3){animation-delay:.4s}
+/* Pronunciation badge */
+.pron-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:var(--radius-pill);flex-shrink:0;margin-bottom:4px;display:inline-block}
+.pron-badge.high{background:rgba(34,197,94,.15);color:var(--green)}
+.pron-badge.mid{background:rgba(245,158,11,.15);color:var(--yellow)}
+.pron-badge.low{background:rgba(239,68,68,.15);color:var(--red)}
+
+/* Feedback card */
+.feedback-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-top:6px;margin-bottom:8px;overflow:hidden;animation:msg-in .3s ease .1s both}
+.feedback-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;transition:background .2s}
+.feedback-header:hover{background:var(--bg3)}
+.feedback-header .fh-scores{display:flex;gap:10px;flex:1}
+.feedback-header .fh-score{font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
+.feedback-header .fh-score .dot{width:6px;height:6px;border-radius:50%}
+.feedback-header .fh-toggle{font-size:12px;color:var(--text3);transition:transform .2s}
+.feedback-header .fh-toggle.open{transform:rotate(180deg)}
+.feedback-body{display:none;padding:0 14px 12px;font-size:13px;color:var(--text2);line-height:1.6}
+.feedback-body.show{display:block}
+.feedback-body .correction{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-top:6px}
+.feedback-body .correction .orig{color:var(--red);text-decoration:line-through;margin-right:6px}
+.feedback-body .correction .fixed{color:var(--green)}
+.feedback-body .correction .vi-note{font-size:12px;color:var(--text3);margin-top:4px;font-style:italic}
+
+/* Typing indicator */
+.typing-indicator{display:flex;align-items:center;gap:10px;align-self:flex-start;animation:msg-in .3s ease}
+.typing-indicator .avatar{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px}
+.typing-bubble{background:var(--bg2);border:1px solid var(--border);border-radius:4px var(--radius) var(--radius) var(--radius);padding:12px 16px;display:flex;align-items:center;gap:10px}
+.typing-dots{display:flex;gap:4px}
+.typing-dots span{width:6px;height:6px;background:var(--text3);border-radius:50%;animation:bounce 1.4s infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+.typing-text{font-size:12px;color:var(--text3)}
+
 @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
 @keyframes msg-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-/* Input area */
-.input-area{padding:12px 20px 16px;background:var(--bg2);border-top:1px solid var(--border)}
+/* ═══ Input area ═══ */
+.input-area{padding:10px 16px 20px;background:rgba(17,17,20,.95);backdrop-filter:blur(12px);border-top:1px solid var(--border)}
 
-/* Mode toggle */
-.mode-row{display:flex;justify-content:center;gap:6px;margin-bottom:10px}
-.mode-pill{padding:5px 14px;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer;transition:all 0.2s}
-.mode-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+/* Voice area */
+.voice-area{display:flex;flex-direction:column;align-items:center;gap:8px}
+.voice-controls{display:flex;align-items:center;gap:16px}
+.live-transcript{font-size:13px;color:var(--accent3);min-height:20px;text-align:center;max-width:90%;line-height:1.5;transition:all .2s}
+.live-transcript.interim{opacity:.7}
 
-/* Voice mode */
-.voice-area{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0}
-.transcript{font-size:13px;color:var(--accent3);min-height:18px;text-align:center;max-width:90%;line-height:1.5}
-.mic{width:64px;height:64px;border-radius:50%;background:var(--gradient);border:none;color:#fff;font-size:26px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(99,102,241,0.25)}
-.mic:hover{transform:scale(1.06)}
-.mic.rec{background:linear-gradient(135deg,var(--red),#f87171);box-shadow:0 4px 24px rgba(239,68,68,0.35);animation:pulse-mic 1.5s infinite}
-.mic:disabled{opacity:.35;cursor:default;transform:none}
-@keyframes pulse-mic{0%,100%{box-shadow:0 4px 24px rgba(239,68,68,0.35)}50%{box-shadow:0 4px 40px rgba(239,68,68,0.55)}}
-.mic-hint{font-size:12px;color:var(--text3)}
+/* Mic button - click to start/stop */
+.mic{width:60px;height:60px;border-radius:50%;background:var(--gradient);border:3px solid transparent;color:#fff;font-size:24px;cursor:pointer;transition:all .25s;box-shadow:0 4px 20px rgba(99,102,241,.25);display:flex;align-items:center;justify-content:center;position:relative}
+.mic:hover{transform:scale(1.05)}
+.mic:active{transform:scale(.97)}
+.mic.listening{background:linear-gradient(135deg,var(--red),#f87171);box-shadow:0 4px 24px rgba(239,68,68,.4);animation:pulse-mic 1.5s infinite}
+.mic.listening::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(239,68,68,.3);animation:ring-expand 1.5s infinite}
+.mic.processing{background:var(--bg4);border-color:var(--accent);pointer-events:none}
+.mic.processing::before{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid transparent;border-top-color:var(--accent);animation:spin 1s linear infinite}
+.mic:disabled{opacity:.35;cursor:not-allowed;transform:none}
+@keyframes pulse-mic{0%,100%{box-shadow:0 4px 24px rgba(239,68,68,.4)}50%{box-shadow:0 4px 40px rgba(239,68,68,.6)}}
+@keyframes ring-expand{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.4);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* Text mode */
-.text-row{display:flex;gap:10px;align-items:center}
-.text-input{flex:1;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:100px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border 0.2s}
-.text-input:focus{border-color:var(--accent)}
-.text-input::placeholder{color:var(--text3)}
-.send{width:44px;height:44px;border-radius:50%;background:var(--gradient);border:none;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;transition:transform 0.15s}
-.send:hover{transform:scale(1.06)}
+.mic-hint{font-size:12px;color:var(--text3);text-align:center;min-height:18px}
 
-/* ═══ SUMMARY MODAL ═══ */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:24px}
+/* Waveform */
+.waveform{display:none;align-items:center;justify-content:center;gap:3px;height:24px;margin:2px 0}
+.waveform.active{display:flex}
+.waveform .bar{width:3px;background:var(--red);border-radius:2px;animation:wave .8s ease-in-out infinite}
+.waveform .bar:nth-child(1){animation-delay:0s;height:8px}
+.waveform .bar:nth-child(2){animation-delay:.1s;height:16px}
+.waveform .bar:nth-child(3){animation-delay:.2s;height:12px}
+.waveform .bar:nth-child(4){animation-delay:.3s;height:20px}
+.waveform .bar:nth-child(5){animation-delay:.4s;height:10px}
+.waveform .bar:nth-child(6){animation-delay:.5s;height:18px}
+.waveform .bar:nth-child(7){animation-delay:.6s;height:8px}
+@keyframes wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+
+/* Text fallback */
+.text-fallback{display:flex;align-items:center;gap:8px;width:100%;max-width:480px;margin-top:4px}
+.text-fallback input{flex:1;padding:10px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-pill);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border .2s}
+.text-fallback input:focus{border-color:var(--accent)}
+.text-fallback input::placeholder{color:var(--text3)}
+.text-fallback .send-btn{width:40px;height:40px;border-radius:50%;background:var(--gradient);border:none;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0;transition:transform .15s;display:flex;align-items:center;justify-content:center}
+.text-fallback .send-btn:hover{transform:scale(1.06)}
+
+/* Confidence indicator */
+.confidence{font-size:11px;display:flex;align-items:center;gap:4px;margin-top:2px}
+.confidence .conf-bar{width:40px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.confidence .conf-fill{height:100%;border-radius:2px;transition:width .3s}
+.confidence .conf-text{font-size:10px;color:var(--text3)}
+
+/* ═══ Summary modal ═══ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);z-index:100;align-items:center;justify-content:center;padding:20px}
 .overlay.show{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:36px;max-width:440px;width:100%;text-align:center;animation:modal-in 0.3s ease}
-@keyframes modal-in{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:none}}
-.modal h2{font-size:22px;font-weight:700;margin-bottom:8px}
-.modal h2 em{font-style:normal;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.modal .subtitle{font-size:14px;color:var(--text2);margin-bottom:24px}
-.modal-stats{display:flex;gap:12px;margin-bottom:24px}
-.modal-stat{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 8px}
-.modal-stat .val{font-size:24px;font-weight:700;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;animation:modal-in .35s ease}
+@keyframes modal-in{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:none}}
+.modal-header{text-align:center;padding:28px 28px 0}
+.modal-header h2{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.modal-header h2 em{font-style:normal;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.modal-header p{font-size:14px;color:var(--text2)}
+
+.modal-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:20px 28px}
+.modal-stat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 8px;text-align:center}
+.modal-stat .val{font-size:22px;font-weight:700;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .modal-stat .lbl{font-size:11px;color:var(--text3);margin-top:4px}
-.modal .feedback-title{font-size:13px;font-weight:600;color:var(--accent2);text-align:left;margin-bottom:8px}
-.modal .feedback-text{font-size:14px;color:var(--text2);text-align:left;line-height:1.7;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:24px}
-.modal .close-btn{width:100%;padding:14px;background:var(--gradient);border:none;border-radius:var(--radius-sm);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.2s}
-.modal .close-btn:hover{box-shadow:0 8px 24px rgba(99,102,241,0.3)}
+
+.score-bars{padding:0 28px 16px}
+.score-bars .sb-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.score-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.score-bar-row .sb-label{font-size:12px;color:var(--text2);width:90px;flex-shrink:0}
+.score-bar-row .sb-track{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.score-bar-row .sb-fill{height:100%;border-radius:3px;transition:width 1s ease}
+.score-bar-row .sb-val{font-size:12px;font-weight:700;width:30px;text-align:right}
+
+.words-section{padding:0 28px 16px}
+.words-section .ws-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.words-list{display:flex;flex-wrap:wrap;gap:6px}
+.word-chip{padding:4px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-pill);font-size:12px;color:var(--accent2)}
+
+.ai-feedback{padding:0 28px 20px}
+.ai-feedback .af-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.ai-feedback .af-text{font-size:14px;color:var(--text2);line-height:1.7;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+
+.modal-actions{display:flex;gap:10px;padding:0 28px 24px}
+.modal-actions button{flex:1;padding:12px;border-radius:var(--radius);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;border:none}
+.modal-actions .btn-primary{background:var(--gradient);color:#fff}
+.modal-actions .btn-primary:hover{box-shadow:0 8px 24px rgba(99,102,241,.3)}
+.modal-actions .btn-secondary{background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
+.modal-actions .btn-secondary:hover{border-color:var(--border2);color:var(--text)}
+.share-row{padding:0 28px 24px;text-align:center}
+.share-btn{padding:8px 20px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-pill);color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s}
+.share-btn:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* Responsive */
+@media(max-width:480px){
+  .topics-grid{grid-template-columns:1fr 1fr}
+  .modal-stats{grid-template-columns:repeat(3,1fr);gap:8px}
+  .chat{padding:12px}
+  .msg{max-width:90%}
+}
 </style>
 </head>
 <body>
+<div class="bg-anim"></div>
 
 <!-- ═══ LOBBY ═══ -->
 <div id="lobby">
-  <div class="logo">🗣️ <span>AI English Coach</span></div>
-  <h1>Ready to <em>practice English</em>?</h1>
-  <p class="sub">Choose a topic and start talking with your AI teacher</p>
-  <input type="text" id="name-input" placeholder="What's your name?" maxlength="30">
-  <div class="topics" id="topic-grid"></div>
-  <button id="start-btn" onclick="startRoom()">🎙️ Start Conversation</button>
+  <div class="lobby-header">
+    <div class="lobby-logo">🗣️ <span>AI English Coach</span> <div class="dot"></div></div>
+    <h1>Ready to <em>speak English</em>?</h1>
+    <p>Choose a topic and practice speaking with your AI teacher</p>
+  </div>
+
+  <div class="name-field">
+    <span class="icon">👤</span>
+    <input type="text" id="name-input" placeholder="Enter your name..." maxlength="30">
+  </div>
+
+  <button class="quick-start" onclick="quickStart()">
+    <span class="shuffle">⚡</span> Quick Start — Random Topic
+  </button>
+
+  <div class="section-label">Choose a Topic</div>
+  <div class="topics-grid" id="topic-grid"></div>
+
+  <div class="start-btn-wrap">
+    <button id="start-btn" onclick="startRoom()">🎙️ Start Conversation</button>
+  </div>
+
+  <div class="recent-section">
+    <div class="section-label">Recent Sessions</div>
+    <div class="recent-list" id="recent-list"></div>
+  </div>
 </div>
 
 <!-- ═══ ROOM ═══ -->
@@ -141,12 +297,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <div class="topbar-left">
       <button class="topbar-back" onclick="leaveRoom()">←</button>
       <div class="topbar-info">
-        <div class="topic" id="room-topic">Free Chat</div>
-        <div class="meta" id="room-meta">Level A2</div>
+        <div class="tb-topic" id="room-topic">Free Chat</div>
+        <div class="tb-meta" id="room-meta">Level A2</div>
       </div>
     </div>
     <div class="topbar-right">
-      <div class="topbar-turns" id="turn-counter">Turn 0</div>
+      <div class="topbar-pill"><div class="dot"></div> <span id="turn-counter">Turn 0</span></div>
       <button class="topbar-end" onclick="endSession()">End</button>
     </div>
   </div>
@@ -154,18 +310,19 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   <div class="chat" id="chat"></div>
 
   <div class="input-area">
-    <div class="mode-row">
-      <button class="mode-pill active" id="mode-voice" onclick="setMode('voice')">🎤 Voice</button>
-      <button class="mode-pill" id="mode-text" onclick="setMode('text')">⌨️ Text</button>
-    </div>
-    <div class="voice-area" id="voice-mode">
-      <div class="transcript" id="live-transcript"></div>
-      <button class="mic" id="mic-btn" onmousedown="startMic()" onmouseup="stopMic()" ontouchstart="startMic()" ontouchend="stopMic()">🎤</button>
-      <div class="mic-hint" id="mic-hint">Hold to speak</div>
-    </div>
-    <div class="text-row" id="text-mode" style="display:none">
-      <input type="text" class="text-input" id="text-input" placeholder="Type in English..." onkeydown="if(event.key==='Enter')sendText()">
-      <button class="send" onclick="sendText()">→</button>
+    <div class="voice-area" id="voice-area">
+      <div class="live-transcript" id="live-transcript"></div>
+      <div class="waveform" id="waveform">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+      <div class="voice-controls">
+        <button class="mic" id="mic-btn" onclick="toggleMic()">🎤</button>
+      </div>
+      <div class="mic-hint" id="mic-hint">Click to start speaking</div>
+      <div class="text-fallback" id="text-fallback">
+        <input type="text" id="text-input" placeholder="Or type here..." onkeydown="if(event.key==='Enter')sendText()">
+        <button class="send-btn" onclick="sendText()">→</button>
+      </div>
     </div>
   </div>
 </div>
@@ -173,51 +330,207 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 <!-- ═══ SUMMARY ═══ -->
 <div class="overlay" id="summary-modal">
   <div class="modal">
-    <h2>🎉 <em>Great Practice!</em></h2>
-    <p class="subtitle">Here's how your session went</p>
+    <div class="modal-header">
+      <h2>🎉 <em>Great Practice!</em></h2>
+      <p id="sum-subtitle">Here's how your session went</p>
+    </div>
     <div class="modal-stats">
       <div class="modal-stat"><div class="val" id="sum-turns">0</div><div class="lbl">Turns</div></div>
-      <div class="modal-stat"><div class="val" id="sum-topic">💬</div><div class="lbl">Topic</div></div>
+      <div class="modal-stat"><div class="val" id="sum-duration">0m</div><div class="lbl">Duration</div></div>
+      <div class="modal-stat"><div class="val" id="sum-score">--</div><div class="lbl">Score</div></div>
     </div>
-    <div class="feedback-title">📝 AI Feedback</div>
-    <div class="feedback-text" id="sum-feedback">Loading...</div>
-    <button class="close-btn" onclick="closeSummary()">Back to Lobby</button>
+    <div class="score-bars">
+      <div class="sb-title">Score Breakdown</div>
+      <div class="score-bar-row">
+        <span class="sb-label">Grammar</span>
+        <div class="sb-track"><div class="sb-fill" id="sb-grammar" style="width:0;background:var(--accent)"></div></div>
+        <span class="sb-val" id="sb-grammar-val">--</span>
+      </div>
+      <div class="score-bar-row">
+        <span class="sb-label">Pronunciation</span>
+        <div class="sb-track"><div class="sb-fill" id="sb-pron" style="width:0;background:var(--cyan)"></div></div>
+        <span class="sb-val" id="sb-pron-val">--</span>
+      </div>
+    </div>
+    <div class="words-section">
+      <div class="ws-title">New Words Learned</div>
+      <div class="words-list" id="sum-words"></div>
+    </div>
+    <div class="ai-feedback">
+      <div class="af-title">AI Feedback</div>
+      <div class="af-text" id="sum-feedback">Loading...</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeSummary()">🏠 Back Home</button>
+      <button class="btn-primary" onclick="practiceAgain()">🔄 Practice Again</button>
+    </div>
+    <div class="share-row">
+      <button class="share-btn" onclick="shareSession()">📋 Copy Share Link</button>
+    </div>
   </div>
 </div>
 
 <script>
 const TOPICS=[
-  {id:"free-chat",en:"Free Chat",vi:"Nói Chuyện Tự Do",level:"A2",icon:"💬"},
-  {id:"ordering-food",en:"Ordering Food",vi:"Gọi Món",level:"A2",icon:"🍜"},
-  {id:"meeting-people",en:"Meeting People",vi:"Gặp Gỡ",level:"A1",icon:"👋"},
-  {id:"ielts-part1",en:"IELTS Part 1",vi:"IELTS Part 1",level:"B1-B2",icon:"🎯"},
-  {id:"job-interview",en:"Job Interview",vi:"Phỏng Vấn",level:"B1",icon:"💼"}
+  {id:"free-chat",en:"Free Chat",vi:"Nói Chuyện Tự Do",level:"A2",levelClass:"beginner",icon:"💬",desc:"Chat about anything you like. Great for daily practice.",duration:"5-10 min"},
+  {id:"ordering-food",en:"Ordering Food",vi:"Gọi Món",level:"A2",levelClass:"beginner",icon:"🍜",desc:"Practice ordering at restaurants and cafes.",duration:"5-8 min"},
+  {id:"meeting-people",en:"Meeting People",vi:"Gặp Gỡ",level:"A1",levelClass:"beginner",icon:"👋",desc:"Learn to introduce yourself and make small talk.",duration:"5-8 min"},
+  {id:"ielts-part1",en:"IELTS Speaking Part 1",vi:"IELTS Part 1",level:"B1-B2",levelClass:"intermediate",icon:"🎯",desc:"Practice common IELTS Part 1 questions.",duration:"8-12 min"},
+  {id:"job-interview",en:"Job Interview",vi:"Phỏng Vấn",level:"B1",levelClass:"intermediate",icon:"💼",desc:"Prepare for English job interviews.",duration:"8-12 min"},
+  {id:"travel",en:"Travel English",vi:"Du Lịch",level:"A2",levelClass:"beginner",icon:"✈️",desc:"Learn phrases for traveling abroad.",duration:"5-10 min"},
+  {id:"business",en:"Business English",vi:"Kinh Doanh",level:"B2",levelClass:"advanced",icon:"📊",desc:"Professional English for the workplace.",duration:"10-15 min"},
+  {id:"daily-routine",en:"Daily Routine",vi:"Hoạt Động Hàng Ngày",level:"A1",levelClass:"beginner",icon:"🌅",desc:"Talk about your everyday activities.",duration:"5-8 min"}
 ];
-let selTopic="free-chat",ws=null,isRec=false,recognition=null,curMode="voice",turns=0,synth=window.speechSynthesis;
+
+let selTopic="free-chat",ws=null,micState="idle",recognition=null,turns=0,startTime=null;
+let sessionGrammarScores=[],sessionPronScores=[],sessionWords=[];
+const synth=window.speechSynthesis;
 
 function init(){
   const g=document.getElementById("topic-grid");
   TOPICS.forEach(t=>{
-    const b=document.createElement("div");
-    b.className="topic-btn"+(t.id===selTopic?" selected":"");
-    b.innerHTML=`<span class="icon">${t.icon}</span><div class="name">${t.en}</div><div class="level">${t.level}</div>`;
-    b.onclick=()=>{selTopic=t.id;document.querySelectorAll(".topic-btn").forEach(x=>x.classList.remove("selected"));b.classList.add("selected")};
-    g.appendChild(b);
+    const card=document.createElement("div");
+    card.className="topic-card"+(t.id===selTopic?" selected":"");
+    card.innerHTML=`
+      <div class="selected-check">✓</div>
+      <div class="top-row"><span class="t-icon">${t.icon}</span><span class="level-badge ${t.levelClass}">${t.level}</span></div>
+      <div class="t-name">${t.en}</div>
+      <div class="t-desc">${t.desc}</div>
+      <div class="t-meta">⏱ ${t.duration}</div>`;
+    card.onclick=()=>selectTopic(t.id);
+    g.appendChild(card);
   });
-  if("webkitSpeechRecognition"in window||"SpeechRecognition"in window){
-    const R=window.SpeechRecognition||window.webkitSpeechRecognition;
-    recognition=new R();recognition.continuous=false;recognition.interimResults=true;recognition.lang="en-US";
-    recognition.onresult=e=>{
-      let i="",f="";
-      for(let j=e.resultIndex;j<e.results.length;j++){if(e.results[j].isFinal)f+=e.results[j][0].transcript;else i+=e.results[j][0].transcript}
-      document.getElementById("live-transcript").textContent=i||f||"";
-      if(f)sendSpeech(f.trim());
-    };
-    recognition.onerror=()=>stopRec();
-    recognition.onend=()=>{if(isRec)stopRec()};
-  }
+  loadRecent();
+  initASR();
 }
 
+function selectTopic(id){
+  selTopic=id;
+  document.querySelectorAll(".topic-card").forEach((c,i)=>{
+    c.classList.toggle("selected",TOPICS[i].id===id);
+  });
+}
+
+function quickStart(){
+  const r=TOPICS[Math.floor(Math.random()*TOPICS.length)];
+  selectTopic(r.id);
+  startRoom();
+}
+
+function loadRecent(){
+  const list=document.getElementById("recent-list");
+  const data=JSON.parse(localStorage.getItem("recentSessions")||"[]");
+  if(!data.length){list.innerHTML='<div class="recent-empty">No recent sessions yet</div>';return}
+  list.innerHTML=data.slice(0,3).map(s=>`
+    <div class="recent-item">
+      <span class="ri-icon">${s.icon||"💬"}</span>
+      <div class="ri-info"><div class="ri-topic">${s.topic}</div><div class="ri-meta">${s.date} · ${s.turns} turns</div></div>
+      <span class="ri-score ${s.score>=80?"high":"mid"}">${s.score||"--"}%</span>
+    </div>`).join("");
+}
+
+function saveRecent(topic,turns,score){
+  const data=JSON.parse(localStorage.getItem("recentSessions")||"[]");
+  const t=TOPICS.find(x=>x.id===selTopic);
+  data.unshift({topic:t.en,icon:t.icon,turns,score,date:new Date().toLocaleDateString("vi-VN"),ts:Date.now()});
+  localStorage.setItem("recentSessions",JSON.stringify(data.slice(0,10)));
+}
+
+function initASR(){
+  if(!("webkitSpeechRecognition" in window||"SpeechRecognition" in window))return;
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new R();
+  recognition.continuous=true;
+  recognition.interimResults=true;
+  recognition.lang="en-US";
+  recognition.onresult=e=>{
+    let interim="",final="";
+    let confidence=0;
+    for(let j=e.resultIndex;j<e.results.length;j++){
+      const r=e.results[j];
+      if(r.isFinal){final+=r[0].transcript;confidence=r[0].confidence}
+      else interim+=r[0].transcript;
+    }
+    const el=document.getElementById("live-transcript");
+    if(interim&&!final){el.textContent=interim;el.classList.add("interim")}
+    if(final){el.textContent=final;el.classList.remove("interim")}
+    if(confidence>0)showConfidence(confidence);
+  };
+  recognition.onerror=e=>{if(e.error!=="no-speech")stopListening()};
+  recognition.onend=()=>{if(micState==="listening"){try{recognition.start()}catch(e){}}};
+}
+
+function showConfidence(c){
+  let el=document.getElementById("conf-indicator");
+  if(!el){el=document.createElement("div");el.id="conf-indicator";el.className="confidence";document.getElementById("live-transcript").after(el)}
+  const pct=Math.round(c*100);
+  const color=pct>=80?"var(--green)":pct>=60?"var(--yellow)":"var(--red)";
+  el.innerHTML=`<div class="conf-bar"><div class="conf-fill" style="width:${pct}%;background:${color}"></div></div><span class="conf-text">${pct}% confident</span>`;
+}
+
+function toggleMic(){
+  if(micState==="idle")startListening();
+  else if(micState==="listening")stopListening();
+}
+
+function startListening(){
+  if(!recognition)return;
+  synth.cancel();
+  micState="listening";
+  const btn=document.getElementById("mic-btn");
+  btn.classList.add("listening");
+  btn.innerHTML="⏹";
+  document.getElementById("waveform").classList.add("active");
+  document.getElementById("live-transcript").textContent="";
+  document.getElementById("live-transcript").classList.remove("interim");
+  document.getElementById("mic-hint").textContent="Click to stop recording";
+  const conf=document.getElementById("conf-indicator");if(conf)conf.remove();
+  try{recognition.start()}catch(e){}
+}
+
+function stopListening(){
+  if(micState!=="listening")return;
+  micState="processing";
+  const btn=document.getElementById("mic-btn");
+  btn.classList.remove("listening");
+  btn.classList.add("processing");
+  btn.innerHTML="⏳";
+  document.getElementById("waveform").classList.remove("active");
+  document.getElementById("mic-hint").textContent="Processing...";
+  try{recognition.stop()}catch(e){}
+  const text=document.getElementById("live-transcript").textContent.trim();
+  if(text)sendSpeech(text);
+  else resetMic();
+}
+
+function resetMic(){
+  micState="idle";
+  const btn=document.getElementById("mic-btn");
+  btn.classList.remove("listening","processing");
+  btn.innerHTML="🎤";
+  document.getElementById("live-transcript").textContent="";
+  document.getElementById("mic-hint").textContent="Click to start speaking";
+  document.getElementById("waveform").classList.remove("active");
+  const conf=document.getElementById("conf-indicator");if(conf)conf.remove();
+}
+
+function sendSpeech(text){
+  if(!text||!ws||ws.readyState!==1)return;
+  document.getElementById("live-transcript").textContent="";
+  addYou(text);
+  ws.send(JSON.stringify({type:"student_speech",text}));
+}
+
+function sendText(){
+  const input=document.getElementById("text-input");
+  const text=input.value.trim();
+  if(!text)return;
+  addYou(text);
+  input.value="";
+  if(ws&&ws.readyState===1)ws.send(JSON.stringify({type:"student_speech",text}));
+}
+
+/* ═══ Room ═══ */
 function startRoom(){
   const name=document.getElementById("name-input").value.trim()||"Student";
   const t=TOPICS.find(x=>x.id===selTopic);
@@ -227,11 +540,15 @@ function startRoom(){
   document.getElementById("room-meta").textContent=`${t.level} · ${t.vi}`;
   document.getElementById("chat").innerHTML="";
   turns=0;updateTurns();
+  startTime=Date.now();
+  sessionGrammarScores=[];sessionPronScores=[];sessionWords=[];
   const sid=Math.random().toString(36).slice(2,10);
   const p=location.protocol==="https:"?"wss:":"ws:";
   ws=new WebSocket(`${p}//${location.host}/ws/room/${sid}`);
   ws.onopen=()=>ws.send(JSON.stringify({type:"start",topic:selTopic,name}));
   ws.onmessage=e=>handleMsg(JSON.parse(e.data));
+  ws.onerror=()=>addAI("Connection error. Please try again.");
+  ws.onclose=()=>{if(micState!=="idle")resetMic()};
 }
 
 function leaveRoom(){
@@ -239,39 +556,179 @@ function leaveRoom(){
   document.getElementById("room").style.display="none";
   document.getElementById("lobby").style.display="flex";
   if(ws)ws.close();synth.cancel();
+  resetMic();
+  loadRecent();
 }
 
 function handleMsg(d){
   switch(d.type){
     case"ai_greeting":addAI(d.text);speak(d.text);break;
     case"ai_thinking":showTyping();break;
-    case"ai_response":removeTyping();addAI(d.text);speak(d.text);turns=d.turn||turns;updateTurns();break;
+    case"ai_response":
+      removeTyping();addAI(d.text);speak(d.text);
+      turns=d.turn||turns;updateTurns();
+      if(d.grammar_score!=null)sessionGrammarScores.push(d.grammar_score);
+      if(d.pron_score!=null)sessionPronScores.push(d.pron_score);
+      if(d.new_words)d.new_words.forEach(w=>{if(!sessionWords.includes(w))sessionWords.push(w)});
+      resetMic();
+      break;
     case"session_summary":removeTyping();showSummary(d);break;
-    case"error":removeTyping();addAI(d.message||"Try again?");break;
+    case"feedback":
+      if(d.text&&d.text.split(/\s+/).length>=3)addFeedback(d);
+      break;
+    case"error":removeTyping();addAI(d.message||"Sorry, please try again.");resetMic();break;
   }
 }
 
-function addAI(t){const c=document.getElementById("chat");c.innerHTML+=`<div class="msg ai"><div class="label">🤖 AI</div><div class="bubble">${esc(t)}</div></div>`;c.scrollTop=c.scrollHeight;document.getElementById("mic-btn").disabled=false;document.getElementById("mic-hint").textContent="Hold to speak"}
-function addYou(t){const c=document.getElementById("chat");c.innerHTML+=`<div class="msg student"><div class="label">You</div><div class="bubble">${esc(t)}</div></div>`;c.scrollTop=c.scrollHeight}
-function showTyping(){removeTyping();const c=document.getElementById("chat");c.innerHTML+=`<div class="typing" id="typing"><span></span><span></span><span></span></div>`;c.scrollTop=c.scrollHeight;document.getElementById("mic-btn").disabled=true;document.getElementById("mic-hint").textContent="AI thinking..."}
-function removeTyping(){const e=document.getElementById("typing");if(e)e.remove()}
-function updateTurns(){document.getElementById("turn-counter").textContent=`Turn ${turns}`}
+/* ═══ Chat rendering ═══ */
 function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML}
 
-function startMic(){if(!recognition||isRec)return;isRec=true;synth.cancel();document.getElementById("mic-btn").classList.add("rec");document.getElementById("live-transcript").textContent="Listening...";document.getElementById("mic-hint").textContent="Release to send";try{recognition.start()}catch(e){}}
-function stopMic(){if(!isRec)return;isRec=false;document.getElementById("mic-btn").classList.remove("rec");document.getElementById("mic-hint").textContent="Processing...";try{recognition.stop()}catch(e){}}
-function stopRec(){isRec=false;document.getElementById("mic-btn").classList.remove("rec");document.getElementById("mic-hint").textContent="Hold to speak"}
-function sendSpeech(t){if(!t||!ws||ws.readyState!==1)return;document.getElementById("live-transcript").textContent="";addYou(t);ws.send(JSON.stringify({type:"student_speech",text:t}))}
+function addAI(text){
+  const c=document.getElementById("chat");
+  const div=document.createElement("div");
+  div.className="msg ai";
+  div.innerHTML=`<div class="avatar">🤖</div><div class="bubble">${esc(text)}</div>`;
+  c.appendChild(div);
+  scrollToBottom();
+}
 
-function setMode(m){curMode=m;document.getElementById("mode-voice").classList.toggle("active",m==="voice");document.getElementById("mode-text").classList.toggle("active",m==="text");document.getElementById("voice-mode").style.display=m==="voice"?"flex":"none";document.getElementById("text-mode").style.display=m==="text"?"flex":"none";if(m==="text")document.getElementById("text-input").focus()}
-function sendText(){const i=document.getElementById("text-input"),t=i.value.trim();if(!t)return;addYou(t);i.value="";if(ws&&ws.readyState===1)ws.send(JSON.stringify({type:"student_speech",text:t}))}
+function addYou(text){
+  const c=document.getElementById("chat");
+  const div=document.createElement("div");
+  div.className="msg student";
+  div.innerHTML=`<div class="label">You</div><div class="bubble">${esc(text)}</div>`;
+  c.appendChild(div);
+  scrollToBottom();
+  turns++;updateTurns();
+}
 
-function speak(t){if(!synth)return;synth.cancel();const u=new SpeechSynthesisUtterance(t.replace(/[*_#`]/g,"").replace(/\n/g," "));u.lang="en-US";u.rate=0.9;const v=synth.getVoices().find(x=>x.lang.startsWith("en"));if(v)u.voice=v;synth.speak(u)}
+function addFeedback(d){
+  const c=document.getElementById("chat");
+  const div=document.createElement("div");
+  div.className="feedback-card";
+  const gScore=d.grammar_score||0;
+  const pScore=d.pron_score||0;
+  const gColor=gScore>=80?"var(--green)":gScore>=60?"var(--yellow)":"var(--red)";
+  const pColor=pScore>=80?"var(--green)":pScore>=60?"var(--yellow)":"var(--red)";
+  let bodyHtml="";
+  if(d.correction){
+    bodyHtml+=`<div class="correction"><span class="orig">${esc(d.correction.original||"")}</span> → <span class="fixed">${esc(d.correction.fixed||"")}</span>`;
+    if(d.correction.vietnamese)bodyHtml+=`<div class="vi-note">🇻🇳 ${esc(d.correction.vietnamese)}</div>`;
+    bodyHtml+=`</div>`;
+  }
+  div.innerHTML=`
+    <div class="feedback-header" onclick="this.nextElementSibling.classList.toggle('show');this.querySelector('.fh-toggle').classList.toggle('open')">
+      <div class="fh-scores">
+        <span class="fh-score"><span class="dot" style="background:${gColor}"></span>Grammar ${gScore}</span>
+        <span class="fh-score"><span class="dot" style="background:${pColor}"></span>Pron ${pScore}</span>
+      </div>
+      <span class="fh-toggle">▼</span>
+    </div>
+    <div class="feedback-body">${bodyHtml||"<span style='color:var(--text3)'>Good job! Keep going.</span>"}</div>`;
+  c.appendChild(div);
+  scrollToBottom();
+}
+
+function showTyping(){
+  removeTyping();
+  const c=document.getElementById("chat");
+  const div=document.createElement("div");
+  div.className="typing-indicator";
+  div.id="typing";
+  div.innerHTML=`<div class="avatar">🤖</div><div class="typing-bubble"><div class="typing-dots"><span></span><span></span><span></span></div><span class="typing-text">AI is thinking...</span></div>`;
+  c.appendChild(div);
+  scrollToBottom();
+  document.getElementById("mic-btn").disabled=true;
+  document.getElementById("mic-hint").textContent="AI is thinking...";
+}
+
+function removeTyping(){const e=document.getElementById("typing");if(e)e.remove()}
+
+function scrollToBottom(){const c=document.getElementById("chat");requestAnimationFrame(()=>c.scrollTop=c.scrollHeight)}
+
+function updateTurns(){document.getElementById("turn-counter").textContent=`Turn ${turns}`}
+
+/* ═══ TTS ═══ */
+function speak(text){
+  if(!synth)return;
+  synth.cancel();
+  const clean=text.replace(/[*_#`]/g,"").replace(/\n/g," ");
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang="en-US";u.rate=0.9;
+  const v=synth.getVoices().find(x=>x.lang.startsWith("en"));
+  if(v)u.voice=v;
+  u.onend=()=>{document.getElementById("mic-btn").disabled=false;document.getElementById("mic-hint").textContent="Click to start speaking"};
+  synth.speak(u);
+}
 if(synth){synth.getVoices();synth.onvoiceschanged=()=>synth.getVoices()}
 
-function endSession(){if(ws&&ws.readyState===1){showTyping();ws.send(JSON.stringify({type:"end"}))}}
-function showSummary(d){removeTyping();document.getElementById("sum-turns").textContent=d.turns||turns;document.getElementById("sum-topic").textContent=TOPICS.find(x=>x.id===selTopic)?.icon||"💬";document.getElementById("sum-feedback").textContent=d.summary||"Great practice!";document.getElementById("summary-modal").classList.add("show")}
-function closeSummary(){document.getElementById("summary-modal").classList.remove("show");document.getElementById("room").style.display="none";document.getElementById("lobby").style.display="flex";if(ws)ws.close()}
+/* ═══ End session ═══ */
+function endSession(){
+  if(ws&&ws.readyState===1){showTyping();ws.send(JSON.stringify({type:"end"}))}
+}
+
+function showSummary(d){
+  removeTyping();
+  const duration=startTime?Math.round((Date.now()-startTime)/60000):0;
+  const avgGrammar=sessionGrammarScores.length?Math.round(sessionGrammarScores.reduce((a,b)=>a+b,0)/sessionGrammarScores.length):null;
+  const avgPron=sessionPronScores.length?Math.round(sessionPronScores.reduce((a,b)=>a+b,0)/sessionPronScores.length):null;
+  const overallScore=avgGrammar!=null&&avgPron!=null?Math.round((avgGrammar+avgPron)/2):(avgGrammar||avgPron||null);
+
+  document.getElementById("sum-turns").textContent=turns;
+  document.getElementById("sum-duration").textContent=duration>0?`${duration}m`:`<1m`;
+  document.getElementById("sum-score").textContent=overallScore!=null?`${overallScore}%`:"--";
+  document.getElementById("sum-subtitle").textContent=`Your ${TOPICS.find(x=>x.id===selTopic)?.en||"practice"} session`;
+
+  // Score bars
+  if(avgGrammar!=null){
+    document.getElementById("sb-grammar").style.width=avgGrammar+"%";
+    document.getElementById("sb-grammar").style.background=avgGrammar>=80?"var(--green)":avgGrammar>=60?"var(--yellow)":"var(--red)";
+    document.getElementById("sb-grammar-val").textContent=avgGrammar;
+  }
+  if(avgPron!=null){
+    document.getElementById("sb-pron").style.width=avgPron+"%";
+    document.getElementById("sb-pron").style.background=avgPron>=80?"var(--green)":avgPron>=60?"var(--yellow)":"var(--red)";
+    document.getElementById("sb-pron-val").textContent=avgPron;
+  }
+
+  // Words
+  const wordsEl=document.getElementById("sum-words");
+  if(sessionWords.length){wordsEl.innerHTML=sessionWords.map(w=>`<span class="word-chip">${esc(w)}</span>`).join("")}
+  else{wordsEl.innerHTML='<span style="color:var(--text3);font-size:13px">No new words this session</span>'}
+
+  // Feedback
+  document.getElementById("sum-feedback").textContent=d.summary||"Great practice session! Keep up the good work.";
+
+  document.getElementById("summary-modal").classList.add("show");
+  saveRecent(selTopic,turns,overallScore);
+}
+
+function closeSummary(){
+  document.getElementById("summary-modal").classList.remove("show");
+  document.getElementById("room").style.display="none";
+  document.getElementById("lobby").style.display="flex";
+  if(ws)ws.close();
+  resetMic();
+  loadRecent();
+}
+
+function practiceAgain(){
+  document.getElementById("summary-modal").classList.remove("show");
+  if(ws)ws.close();
+  resetMic();
+  startRoom();
+}
+
+function shareSession(){
+  const url=location.href;
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn=document.querySelector(".share-btn");
+    btn.textContent="✓ Copied!";
+    setTimeout(()=>btn.textContent="📋 Copy Share Link",2000);
+  }).catch(()=>{
+    prompt("Copy this link:",url);
+  });
+}
 
 init();
 </script>

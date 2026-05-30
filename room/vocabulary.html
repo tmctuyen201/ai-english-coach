@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary — AI English Coach</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #09090b;
+            color: #fafafa;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* NAV */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(9,9,11,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #27272a;
+            padding: 0 24px;
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 64px;
+        }
+        .nav-logo {
+            font-weight: 800; font-size: 18px;
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+        .nav-links { display: flex; gap: 8px; align-items: center; }
+        .nav-links a {
+            color: #a1a1aa; text-decoration: none; font-size: 14px; font-weight: 500;
+            padding: 8px 16px; border-radius: 100px; transition: all 0.2s;
+        }
+        .nav-links a:hover { color: #fafafa; background: rgba(99,102,241,0.1); }
+        .nav-links a.active { color: #fafafa; background: rgba(99,102,241,0.15); }
+        .nav-cta {
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            color: #fff !important; font-weight: 600; padding: 8px 20px;
+            border-radius: 100px; text-decoration: none; font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
+        .hamburger { display: none; background: none; border: none; color: #fafafa; font-size: 24px; cursor: pointer; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+        /* STATS BAR */
+        .stats-bar {
+            display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap;
+        }
+        .stat-chip {
+            background: #111114; border: 1px solid #27272a; border-radius: 100px;
+            padding: 10px 20px; font-size: 14px; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .stat-chip .icon { font-size: 18px; }
+        .stat-chip .value { color: #fafafa; font-weight: 700; }
+        .stat-chip .label { color: #a1a1aa; }
+
+        /* FLASHCARD AREA */
+        .flashcard-area {
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 48px;
+        }
+        .progress-info {
+            font-size: 14px; color: #a1a1aa; margin-bottom: 16px; font-weight: 500;
+        }
+        .progress-bar-container {
+            width: 100%; max-width: 500px; height: 6px;
+            background: #27272a; border-radius: 3px; margin-bottom: 32px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; border-radius: 3px;
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            transition: width 0.5s ease;
+        }
+
+        /* CARD */
+        .card-container {
+            perspective: 1000px; width: 100%; max-width: 500px; height: 320px;
+            margin-bottom: 24px; cursor: pointer;
+        }
+        .card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .card-container.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; border-radius: 16px;
+            background: #111114; border: 1px solid #27272a;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 40px;
+        }
+        .card-back { transform: rotateY(180deg); }
+        .card-front { position: relative; overflow: hidden; }
+        .card-front::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+        }
+        .card-word { font-size: 36px; font-weight: 800; margin-bottom: 8px; }
+        .card-phonetic { font-size: 16px; color: #a1a1aa; margin-bottom: 8px; font-style: italic; }
+        .card-pos { font-size: 13px; color: #71717a; background: rgba(99,102,241,0.1); padding: 4px 14px; border-radius: 100px; }
+        .card-hint { font-size: 12px; color: #71717a; margin-top: 20px; }
+        .card-vi { font-size: 28px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+        .card-example { font-size: 14px; color: #a1a1aa; text-align: center; line-height: 1.6; max-width: 400px; }
+        .card-example em { color: #6366f1; font-style: normal; font-weight: 600; }
+
+        /* RATING BUTTONS */
+        .rating-buttons {
+            display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; justify-content: center;
+        }
+        .rating-btn {
+            padding: 12px 28px; border-radius: 100px; font-size: 14px; font-weight: 600;
+            border: 1px solid #27272a; background: #111114; color: #a1a1aa;
+            cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            opacity: 0; pointer-events: none;
+        }
+        .rating-btn.visible { opacity: 1; pointer-events: auto; }
+        .rating-btn .time { font-size: 11px; color: #71717a; font-weight: 400; }
+        .rating-btn.again { border-color: #ef4444; color: #ef4444; }
+        .rating-btn.again:hover { background: rgba(239,68,68,0.1); }
+        .rating-btn.hard { border-color: #f59e0b; color: #f59e0b; }
+        .rating-btn.hard:hover { background: rgba(245,158,11,0.1); }
+        .rating-btn.good { border-color: #22c55e; color: #22c55e; }
+        .rating-btn.good:hover { background: rgba(34,197,94,0.1); }
+        .rating-btn.easy { border-color: #6366f1; color: #6366f1; }
+        .rating-btn.easy:hover { background: rgba(99,102,241,0.1); }
+
+        /* WORD LIST */
+        .word-list-section { margin-top: 16px; }
+        .section-title {
+            font-size: 20px; font-weight: 700; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title span { font-size: 24px; }
+        .word-list {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;
+        }
+        .word-item {
+            background: #111114; border: 1px solid #27272a; border-radius: 12px;
+            padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+            transition: all 0.2s;
+        }
+        .word-item:hover { border-color: #6366f1; }
+        .word-info { display: flex; flex-direction: column; }
+        .word-en { font-weight: 600; font-size: 15px; }
+        .word-vn { font-size: 13px; color: #a1a1aa; }
+        .mastery { display: flex; gap: 3px; }
+        .mastery-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #27272a;
+        }
+        .mastery-dot.filled { background: #6366f1; }
+        .mastery-dot.filled.green { background: #22c55e; }
+
+        @media (max-width: 768px) {
+            .nav-links a:not(.nav-cta) { display: none; }
+            .hamburger { display: block; }
+            .nav-links.open a { display: block; }
+            .nav-links.open {
+                position: absolute; top: 64px; left: 0; right: 0;
+                background: #09090b; border-bottom: 1px solid #27272a;
+                padding: 16px 24px; display: flex; flex-direction: column; gap: 8px;
+            }
+            .container { padding: 20px 16px; }
+            .card-container { height: 280px; }
+            .card-word { font-size: 28px; }
+            .card-vi { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a href="/room/topics.html" class="nav-logo">AI English Coach</a>
+            <button class="hamburger" onclick="toggleMenu()">☰</button>
+            <div class="nav-links" id="navLinks">
+                <a href="/room/topics.html">Topics</a>
+                <a href="/room/vocabulary.html" class="active">Vocabulary</a>
+                <a href="/room/progress.html">Progress</a>
+                <a href="/room?topic=greeting" class="nav-cta">Start Practice</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-chip"><span class="icon">📖</span><span class="value" id="dueCount">12</span><span class="label">words due today</span></div>
+            <div class="stat-chip"><span class="icon">🔥</span><span class="value">7</span><span class="label">day streak</span></div>
+            <div class="stat-chip"><span class="icon">📚</span><span class="value" id="totalCount">20</span><span class="label">total words</span></div>
+        </div>
+
+        <!-- Flashcard -->
+        <div class="flashcard-area">
+            <div class="progress-info" id="progressInfo">Card 1 of 20</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressFill" style="width: 5%"></div>
+            </div>
+            <div class="card-container" id="cardContainer" onclick="flipCard()">
+                <div class="card-inner" id="cardInner">
+                    <div class="card-front">
+                        <div class="card-word" id="cardWord">recommend</div>
+                        <div class="card-phonetic" id="cardPhonetic">/ˌrekəˈmend/</div>
+                        <div class="card-pos" id="cardPos">verb</div>
+                        <div class="card-hint">Click to reveal meaning</div>
+                    </div>
+                    <div class="card-back">
+                        <div class="card-vi" id="cardVi">giới thiệu, đề xuất</div>
+                        <div class="card-example" id="cardExample">I would <em>recommend</em> this restaurant to anyone who loves Italian food.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rating-buttons">
+                <button class="rating-btn again" id="btnAgain" onclick="rateCard('again')">Again<span class="time">1 min</span></button>
+                <button class="rating-btn hard" id="btnHard" onclick="rateCard('hard')">Hard<span class="time">1 day</span></button>
+                <button class="rating-btn good" id="btnGood" onclick="rateCard('good')">Good<span class="time">3 days</span></button>
+                <button class="rating-btn easy" id="btnEasy" onclick="rateCard('easy')">Easy<span class="time">7 days</span></button>
+            </div>
+        </div>
+
+        <!-- Word List -->
+        <div class="word-list-section">
+            <div class="section-title"><span>📋</span> All Words</div>
+            <div class="word-list" id="wordList"></div>
+        </div>
+    </div>
+
+    <script>
+        const words = [
+            { en: 'recommend', phonetic: '/ˌrekəˈmend/', pos: 'verb', vi: 'giới thiệu, đề xuất', example: 'I would <em>recommend</em> this restaurant to anyone who loves Italian food.', mastery: 4 },
+            { en: 'delicious', phonetic: '/dɪˈlɪʃəs/', pos: 'adjective', vi: 'ngon, tuyệt vời', example: 'The pho was absolutely <em>delicious</em>!', mastery: 5 },
+            { en: 'confident', phonetic: '/ˈkɒnfɪdənt/', pos: 'adjective', vi: 'tự tin', example: 'She felt more <em>confident</em> after practicing every day.', mastery: 3 },
+            { en: 'improve', phonetic: '/ɪmˈpruːv/', pos: 'verb', vi: 'cải thiện', example: 'You can <em>improve</em> your English by reading books.', mastery: 4 },
+            { en: 'practice', phonetic: '/ˈpræktɪs/', pos: 'noun/verb', vi: 'thực hành, luyện tập', example: '<em>Practice</em> makes perfect!', mastery: 5 },
+            { en: 'conversation', phonetic: '/ˌkɒnvəˈseɪʃən/', pos: 'noun', vi: 'cuộc hội thoại', example: 'We had a great <em>conversation</em> about travel.', mastery: 3 },
+            { en: 'pronunciation', phonetic: '/prəˌnʌnsiˈeɪʃən/', pos: 'noun', vi: 'phát âm', example: 'Your <em>pronunciation</em> is getting better every day.', mastery: 2 },
+            { en: 'grammar', phonetic: '/ˈɡræmər/', pos: 'noun', vi: 'ngữ pháp', example: 'Good <em>grammar</em> helps you communicate clearly.', mastery: 4 },
+            { en: 'vocabulary', phonetic: '/vəˈkæbjələri/', pos: 'noun', vi: 'từ vựng', example: 'Building your <em>vocabulary</em> takes time and effort.', mastery: 3 },
+            { en: 'fluency', phonetic: '/ˈfluːənsi/', pos: 'noun', vi: 'sự lưu loát', example: 'She achieved <em>fluency</em> in just two years.', mastery: 2 },
+            { en: 'encourage', phonetic: '/ɪnˈkʌrɪdʒ/', pos: 'verb', vi: 'khuyến khích, động viên', example: 'Teachers should <em>encourage</em> students to speak more.', mastery: 3 },
+            { en: 'patience', phonetic: '/ˈpeɪʃəns/', pos: 'noun', vi: 'sự kiên nhẫn', example: 'Learning a language requires <em>patience</em>.', mastery: 4 },
+            { en: 'beginner', phonetic: '/bɪˈɡɪnər/', pos: 'noun', vi: 'người mới bắt đầu', example: 'This course is perfect for <em>beginners</em>.', mastery: 5 },
+            { en: 'intermediate', phonetic: '/ˌɪntərˈmiːdiət/', pos: 'adjective', vi: 'trung cấp', example: 'She is at an <em>intermediate</em> level now.', mastery: 3 },
+            { en: 'advanced', phonetic: '/ədˈvɑːnst/', pos: 'adjective', vi: 'nâng cao', example: 'The <em>advanced</em> class covers complex grammar.', mastery: 2 },
+            { en: 'challenge', phonetic: '/ˈtʃælɪndʒ/', pos: 'noun/verb', vi: 'thử thách', example: 'Take on the 30-day speaking <em>challenge</em>!', mastery: 3 },
+            { en: 'progress', phonetic: '/ˈprəʊɡres/', pos: 'noun', vi: 'sự tiến bộ', example: 'You have made amazing <em>progress</em> this month.', mastery: 4 },
+            { en: 'feedback', phonetic: '/ˈfiːdbæk/', pos: 'noun', vi: 'phản hồi', example: 'The AI gives instant <em>feedback</em> on your pronunciation.', mastery: 3 },
+            { en: 'achievement', phonetic: '/əˈtʃiːvmənt/', pos: 'noun', vi: 'thành tựu', example: 'Fluency is a remarkable <em>achievement</em>.', mastery: 2 },
+            { en: 'streak', phonetic: '/striːk/', pos: 'noun', vi: 'chuỗi liên tiếp', example: "Don't break your study <em>streak</em>!", mastery: 5 },
+        ];
+
+        let currentIndex = 0;
+        let reviewed = 0;
+        let isFlipped = false;
+
+        function renderCard() {
+            const w = words[currentIndex];
+            document.getElementById('cardWord').textContent = w.en;
+            document.getElementById('cardPhonetic').textContent = w.phonetic;
+            document.getElementById('cardPos').textContent = w.pos;
+            document.getElementById('cardVi').textContent = w.vi;
+            document.getElementById('cardExample').innerHTML = w.example;
+            document.getElementById('cardContainer').classList.remove('flipped');
+            isFlipped = false;
+            hideRatingButtons();
+            updateProgress();
+        }
+
+        function flipCard() {
+            if (isFlipped) return;
+            document.getElementById('cardContainer').classList.add('flipped');
+            isFlipped = true;
+            showRatingButtons();
+        }
+
+        function showRatingButtons() {
+            ['btnAgain', 'btnHard', 'btnGood', 'btnEasy'].forEach(id => {
+                document.getElementById(id).classList.add('visible');
+            });
+        }
+
+        function hideRatingButtons() {
+            ['btnAgain', 'btnHard', 'btnGood', 'btnEasy'].forEach(id => {
+                document.getElementById(id).classList.remove('visible');
+            });
+        }
+
+        function rateCard(rating) {
+            reviewed++;
+            currentIndex = (currentIndex + 1) % words.length;
+            renderCard();
+        }
+
+        function updateProgress() {
+            const total = words.length;
+            document.getElementById('progressInfo').textContent = `Card ${currentIndex + 1} of ${total}`;
+            document.getElementById('progressFill').style.width = ((currentIndex + 1) / total * 100) + '%';
+        }
+
+        function renderWordList() {
+            const container = document.getElementById('wordList');
+            container.innerHTML = words.map(w => {
+                const dots = Array(5).fill(0).map((_, i) => {
+                    const filled = i < w.mastery;
+                    const green = w.mastery >= 5;
+                    return `<div class="mastery-dot ${filled ? 'filled' : ''} ${filled && green ? 'green' : ''}"></div>`;
+                }).join('');
+                return `
+                    <div class="word-item">
+                        <div class="word-info">
+                            <span class="word-en">${w.en}</span>
+                            <span class="word-vn">${w.vi}</span>
+                        </div>
+                        <div class="mastery">${dots}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('open');
+        }
+
+        renderCard();
+        renderWordList();
+    </script>
+</body>
+</html>

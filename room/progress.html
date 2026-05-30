@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress — AI English Coach</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #09090b;
+            color: #fafafa;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* NAV */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(9,9,11,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #27272a;
+            padding: 0 24px;
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 64px;
+        }
+        .nav-logo {
+            font-weight: 800; font-size: 18px;
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+        .nav-links { display: flex; gap: 8px; align-items: center; }
+        .nav-links a {
+            color: #a1a1aa; text-decoration: none; font-size: 14px; font-weight: 500;
+            padding: 8px 16px; border-radius: 100px; transition: all 0.2s;
+        }
+        .nav-links a:hover { color: #fafafa; background: rgba(99,102,241,0.1); }
+        .nav-links a.active { color: #fafafa; background: rgba(99,102,241,0.15); }
+        .nav-cta {
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            color: #fff !important; font-weight: 600; padding: 8px 20px;
+            border-radius: 100px; text-decoration: none; font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
+        .hamburger { display: none; background: none; border: none; color: #fafafa; font-size: 24px; cursor: pointer; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+        /* WELCOME BANNER */
+        .welcome-banner {
+            background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(6,182,212,0.1));
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 16px; padding: 28px 32px;
+            margin-bottom: 32px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .welcome-text h2 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .welcome-text p { color: #a1a1aa; font-size: 14px; }
+        .streak-badge {
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            border-radius: 100px; padding: 12px 24px;
+            font-weight: 700; font-size: 16px; white-space: nowrap;
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 16px; margin-bottom: 32px;
+        }
+        .stat-card {
+            background: #111114; border: 1px solid #27272a; border-radius: 16px;
+            padding: 24px; text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: #6366f1; }
+        .stat-icon { font-size: 32px; margin-bottom: 12px; }
+        .stat-value { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+        .stat-label { font-size: 13px; color: #a1a1aa; }
+
+        /* CHART */
+        .chart-section {
+            background: #111114; border: 1px solid #27272a; border-radius: 16px;
+            padding: 28px; margin-bottom: 32px;
+        }
+        .chart-title {
+            font-size: 18px; font-weight: 700; margin-bottom: 24px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .chart-bars {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            height: 200px; gap: 12px; padding: 0 8px;
+        }
+        .chart-bar-wrapper {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            height: 100%; justify-content: flex-end;
+        }
+        .chart-bar-value {
+            font-size: 12px; font-weight: 600; color: #a1a1aa; margin-bottom: 8px;
+        }
+        .chart-bar {
+            width: 100%; max-width: 60px; border-radius: 8px 8px 0 0;
+            background: linear-gradient(180deg, #6366f1, #06b6d4);
+            transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 4px;
+        }
+        .chart-bar-label {
+            font-size: 12px; color: #71717a; margin-top: 12px; font-weight: 500;
+        }
+
+        /* TWO-COLUMN LAYOUT */
+        .two-col {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 24px; margin-bottom: 32px;
+        }
+
+        /* RECENT SESSIONS */
+        .sessions-card {
+            background: #111114; border: 1px solid #27272a; border-radius: 16px;
+            padding: 28px;
+        }
+        .card-title {
+            font-size: 18px; font-weight: 700; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .session-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 0; border-bottom: 1px solid #27272a;
+        }
+        .session-item:last-child { border-bottom: none; }
+        .session-left { display: flex; align-items: center; gap: 12px; }
+        .session-icon { font-size: 28px; }
+        .session-info { display: flex; flex-direction: column; }
+        .session-topic { font-weight: 600; font-size: 14px; }
+        .session-date { font-size: 12px; color: #71717a; }
+        .session-right { display: flex; align-items: center; gap: 16px; }
+        .session-score {
+            background: rgba(99,102,241,0.15); color: #6366f1;
+            padding: 4px 12px; border-radius: 100px; font-size: 13px; font-weight: 700;
+        }
+        .session-duration { font-size: 12px; color: #71717a; }
+
+        /* ACHIEVEMENTS */
+        .achievements-card {
+            background: #111114; border: 1px solid #27272a; border-radius: 16px;
+            padding: 28px;
+        }
+        .achievements-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+        }
+        .achievement {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px 12px; border-radius: 12px;
+            background: rgba(99,102,241,0.05); border: 1px solid #27272a;
+            transition: all 0.3s; text-align: center;
+        }
+        .achievement.unlocked { border-color: rgba(99,102,241,0.3); }
+        .achievement.unlocked:hover { transform: translateY(-2px); border-color: #6366f1; }
+        .achievement.locked { opacity: 0.4; }
+        .achievement-icon { font-size: 36px; margin-bottom: 8px; }
+        .achievement-name { font-size: 12px; font-weight: 600; }
+        .achievement-status {
+            font-size: 10px; margin-top: 4px; font-weight: 500;
+        }
+        .achievement.unlocked .achievement-status { color: #22c55e; }
+        .achievement.locked .achievement-status { color: #71717a; }
+
+        /* WEEKLY GOAL */
+        .weekly-goal {
+            background: #111114; border: 1px solid #27272a; border-radius: 16px;
+            padding: 28px; margin-bottom: 32px;
+        }
+        .goal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .goal-title { font-size: 18px; font-weight: 700; }
+        .goal-count { font-size: 14px; color: #a1a1aa; font-weight: 500; }
+        .goal-bar-bg {
+            height: 12px; background: #27272a; border-radius: 6px; overflow: hidden;
+        }
+        .goal-bar-fill {
+            height: 100%; border-radius: 6px;
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .goal-days {
+            display: flex; gap: 8px; margin-top: 12px;
+        }
+        .goal-day {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 600;
+            border: 1px solid #27272a; color: #71717a;
+        }
+        .goal-day.done {
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            border-color: transparent; color: #fff;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .two-col { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .nav-links a:not(.nav-cta) { display: none; }
+            .hamburger { display: block; }
+            .nav-links.open a { display: block; }
+            .nav-links.open {
+                position: absolute; top: 64px; left: 0; right: 0;
+                background: #09090b; border-bottom: 1px solid #27272a;
+                padding: 16px 24px; display: flex; flex-direction: column; gap: 8px;
+            }
+            .container { padding: 20px 16px; }
+            .welcome-banner { flex-direction: column; gap: 16px; text-align: center; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .achievements-grid { grid-template-columns: repeat(2, 1fr); }
+            .chart-bars { height: 150px; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a href="/room/topics.html" class="nav-logo">AI English Coach</a>
+            <button class="hamburger" onclick="toggleMenu()">☰</button>
+            <div class="nav-links" id="navLinks">
+                <a href="/room/topics.html">Topics</a>
+                <a href="/room/vocabulary.html">Vocabulary</a>
+                <a href="/room/progress.html" class="active">Progress</a>
+                <a href="/room?topic=greeting" class="nav-cta">Start Practice</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+            <div class="welcome-text">
+                <h2>Welcome back, Minh! 👋</h2>
+                <p>Keep up the great work — you're on fire!</p>
+            </div>
+            <div class="streak-badge">🔥 7 Day Streak</div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">💬</div>
+                <div class="stat-value">47</div>
+                <div class="stat-label">Total Conversations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-value">12h 30m</div>
+                <div class="stat-label">Practice Time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div class="stat-value">156</div>
+                <div class="stat-label">Words Learned</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value">B1</div>
+                <div class="stat-label">Current Level</div>
+            </div>
+        </div>
+
+        <!-- Score Chart -->
+        <div class="chart-section">
+            <div class="chart-title">📈 Score Trend (Last 7 Days)</div>
+            <div class="chart-bars" id="chartBars"></div>
+        </div>
+
+        <!-- Two Column: Sessions + Achievements -->
+        <div class="two-col">
+            <div class="sessions-card">
+                <div class="card-title">🕐 Recent Sessions</div>
+                <div id="sessionsList"></div>
+            </div>
+            <div class="achievements-card">
+                <div class="card-title">🏆 Achievements</div>
+                <div class="achievements-grid" id="achievementsGrid"></div>
+            </div>
+        </div>
+
+        <!-- Weekly Goal -->
+        <div class="weekly-goal">
+            <div class="goal-header">
+                <div class="goal-title">🎯 Weekly Goal</div>
+                <div class="goal-count">Practice 5 days this week: <strong>4/5</strong></div>
+            </div>
+            <div class="goal-bar-bg">
+                <div class="goal-bar-fill" id="goalFill" style="width: 0%"></div>
+            </div>
+            <div class="goal-days" id="goalDays"></div>
+        </div>
+    </div>
+
+    <script>
+        // Chart data
+        const chartData = [
+            { day: 'Mon', score: 55 },
+            { day: 'Tue', score: 58 },
+            { day: 'Wed', score: 62 },
+            { day: 'Thu', score: 60 },
+            { day: 'Fri', score: 68 },
+            { day: 'Sat', score: 72 },
+            { day: 'Sun', score: 75 },
+        ];
+
+        function renderChart() {
+            const maxScore = 100;
+            const container = document.getElementById('chartBars');
+            container.innerHTML = chartData.map((d, i) => `
+                <div class="chart-bar-wrapper">
+                    <div class="chart-bar-value">${d.score}</div>
+                    <div class="chart-bar" style="height: 0%" data-height="${(d.score / maxScore) * 100}"></div>
+                    <div class="chart-bar-label">${d.day}</div>
+                </div>
+            `).join('');
+
+            // Animate bars
+            setTimeout(() => {
+                document.querySelectorAll('.chart-bar').forEach(bar => {
+                    bar.style.height = bar.dataset.height + '%';
+                });
+            }, 200);
+        }
+
+        // Sessions
+        const sessions = [
+            { icon: '💼', topic: 'Job Interview', score: 85, duration: '14 min', date: 'Today, 2:30 PM' },
+            { icon: '✈️', topic: 'Travel', score: 78, duration: '12 min', date: 'Today, 10:15 AM' },
+            { icon: '🍜', topic: 'Ordering Food', score: 92, duration: '10 min', date: 'Yesterday' },
+            { icon: '🎯', topic: 'IELTS Part 1', score: 70, duration: '15 min', date: '2 days ago' },
+            { icon: '💻', topic: 'Technology', score: 65, duration: '11 min', date: '3 days ago' },
+        ];
+
+        function renderSessions() {
+            const container = document.getElementById('sessionsList');
+            container.innerHTML = sessions.map(s => `
+                <div class="session-item">
+                    <div class="session-left">
+                        <span class="session-icon">${s.icon}</span>
+                        <div class="session-info">
+                            <span class="session-topic">${s.topic}</span>
+                            <span class="session-date">${s.date}</span>
+                        </div>
+                    </div>
+                    <div class="session-right">
+                        <span class="session-duration">${s.duration}</span>
+                        <span class="session-score">${s.score}%</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Achievements
+        const achievements = [
+            { icon: '🔥', name: '7-Day Streak', unlocked: true },
+            { icon: '💯', name: 'First Conversation', unlocked: true },
+            { icon: '📚', name: '100 Words', unlocked: true },
+            { icon: '🎯', name: 'Grammar Master', unlocked: false },
+            { icon: '🎤', name: 'Pronunciation Pro', unlocked: false },
+            { icon: '🗺️', name: 'Topic Explorer', unlocked: false },
+        ];
+
+        function renderAchievements() {
+            const container = document.getElementById('achievementsGrid');
+            container.innerHTML = achievements.map(a => `
+                <div class="achievement ${a.unlocked ? 'unlocked' : 'locked'}">
+                    <span class="achievement-icon">${a.icon}</span>
+                    <span class="achievement-name">${a.name}</span>
+                    <span class="achievement-status">${a.unlocked ? '✓ Unlocked' : '🔒 Locked'}</span>
+                </div>
+            `).join('');
+        }
+
+        // Weekly Goal
+        function renderGoal() {
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const done = [true, true, true, true, false, false, false];
+            const container = document.getElementById('goalDays');
+            container.innerHTML = days.map((d, i) => `
+                <div class="goal-day ${done[i] ? 'done' : ''}">${d.charAt(0)}</div>
+            `).join('');
+
+            setTimeout(() => {
+                document.getElementById('goalFill').style.width = '80%';
+            }, 300);
+        }
+
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('open');
+        }
+
+        renderChart();
+        renderSessions();
+        renderAchievements();
+        renderGoal();
+    </script>
+</body>
+</html>

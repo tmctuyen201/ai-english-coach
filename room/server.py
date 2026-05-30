@@ -198,6 +198,18 @@ async def landing_alias():
 async def auth_alias():
     return FileResponse("auth.html")
 
+@app.get("/topics")
+async def topics_page():
+    return FileResponse("topics.html")
+
+@app.get("/vocabulary")
+async def vocabulary_page():
+    return FileResponse("vocabulary.html")
+
+@app.get("/progress")
+async def progress_page():
+    return FileResponse("progress.html")
+
 @app.get("/health")
 async def health():
     return {"status": "healthy", "active_sessions": len(sessions)}
