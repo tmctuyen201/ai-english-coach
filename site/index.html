@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI English Coach — Documentation</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-code: #1a1a2e;
+            --border: #2a2a3e;
+            --text: #e0e0e8;
+            --text-muted: #8888a0;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --green: #22c55e;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --purple: #a855f7;
+            --cyan: #06b6d4;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        /* Sidebar */
+        .sidebar {
+            position: fixed; left: 0; top: 0; bottom: 0;
+            width: 280px; background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            overflow-y: auto; padding: 24px 0; z-index: 100;
+        }
+        .sidebar-logo {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        .sidebar-logo h2 { font-size: 18px; color: var(--accent-light); }
+        .sidebar-logo p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .sidebar a {
+            display: block; padding: 8px 24px;
+            color: var(--text-muted); text-decoration: none;
+            font-size: 14px; transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            color: var(--accent-light);
+            background: rgba(99,102,241,0.08);
+            border-left-color: var(--accent);
+        }
+        .sidebar .section-title {
+            padding: 16px 24px 8px;
+            font-size: 11px; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--text-muted);
+            font-weight: 600;
+        }
+        /* Main */
+        .main {
+            margin-left: 280px;
+            padding: 48px 64px;
+            max-width: 1000px;
+        }
+        .main h1 {
+            font-size: 36px; font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .main .subtitle {
+            font-size: 18px; color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+        .main h2 {
+            font-size: 26px; font-weight: 600;
+            color: var(--text); margin: 48px 0 16px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .main h3 {
+            font-size: 20px; font-weight: 600;
+            color: var(--accent-light); margin: 32px 0 12px;
+        }
+        .main h4 {
+            font-size: 16px; font-weight: 600;
+            color: var(--cyan); margin: 24px 0 8px;
+        }
+        .main p { margin-bottom: 16px; color: var(--text); }
+        .main ul, .main ol { margin: 0 0 16px 24px; }
+        .main li { margin-bottom: 6px; }
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 16px; font-weight: 600;
+            color: var(--accent-light);
+            margin-bottom: 12px;
+        }
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px; font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+        /* Code */
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+        }
+        .inline-code {
+            background: var(--bg-code);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--cyan);
+        }
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+        th {
+            background: var(--bg-code);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-light);
+            border-bottom: 2px solid var(--border);
+        }
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        tr:hover td { background: rgba(99,102,241,0.04); }
+        /* Diagram blocks */
+        .diagram {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre;
+            margin-bottom: 24px;
+            color: var(--text-muted);
+        }
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tag-green { background: rgba(34,197,94,0.15); color: var(--green); }
+        .tag-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+        .tag-red { background: rgba(239,68,68,0.15); color: var(--red); }
+        .tag-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+        .tag-purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+        /* Progress bar */
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-code);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .progress-green { background: linear-gradient(90deg, var(--green), #4ade80); }
+        .progress-blue { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+        .progress-yellow { background: linear-gradient(90deg, var(--yellow), #fbbf24); }
+        /* Callout */
+        .callout {
+            border-left: 4px solid var(--accent);
+            background: rgba(99,102,241,0.08);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+        }
+        .callout-title { font-weight: 600; margin-bottom: 4px; }
+        .callout-success { border-left-color: var(--green); background: rgba(34,197,94,0.08); }
+        .callout-warning { border-left-color: var(--yellow); background: rgba(245,158,11,0.08); }
+        .callout-error { border-left-color: var(--red); background: rgba(239,68,68,0.08); }
+        /* Flow steps */
+        .flow-step {
+            display: flex; align-items: flex-start; gap: 16px;
+            margin-bottom: 16px;
+        }
+        .flow-number {
+            width: 32px; height: 32px; min-width: 32px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; color: white;
+        }
+        .flow-content { flex: 1; }
+        .flow-content strong { color: var(--accent-light); }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 24px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+    <div class="sidebar-logo">
+        <h2>🗣️ AI English Coach</h2>
+        <p>AI20K-033 • Documentation v2.0</p>
+    </div>
+
+    <div class="section-title">Overview</div>
+    <a href="#overview" class="active">Project Overview</a>
+    <a href="#architecture">System Architecture</a>
+    <a href="#tech-stack">Tech Stack</a>
+
+    <div class="section-title">How It Works</div>
+    <a href="#user-journey">User Journey</a>
+    <a href="#conversation-engine">Conversation Engine</a>
+    <a href="#asr">Speech-to-Text (ASR)</a>
+    <a href="#llm">LLM Agent</a>
+    <a href="#tts">Text-to-Speech (TTS)</a>
+
+    <div class="section-title">Features</div>
+    <a href="#grammar">Grammar Correction</a>
+    <a href="#pronunciation">Pronunciation Scoring</a>
+    <a href="#topics">Topic System</a>
+    <a href="#vocabulary">Vocabulary Builder</a>
+    <a href="#parent">Parent Dashboard</a>
+    <a href="#gamification">Gamification</a>
+
+    <div class="section-title">Technical</div>
+    <a href="#database">Database Schema</a>
+    <a href="#websocket">WebSocket Protocol</a>
+    <a href="#api">API Endpoints</a>
+    <a href="#caching">Caching</a>
+    <a href="#security">Security</a>
+    <a href="#errors">Error Handling</a>
+
+    <div class="section-title">Business</div>
+    <a href="#personas">User Personas</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#cost">Cost Analysis</a>
+    <a href="#roadmap">Roadmap</a>
+</nav>
+
+<!-- Main Content -->
+<div class="main">
+
+<!-- ==================== OVERVIEW ==================== -->
+<h1 id="overview">AI English Coach</h1>
+<p class="subtitle">AI-powered English speaking practice platform for Vietnamese students</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">20M+</div>
+        <div class="stat-label">Target Students (Vietnam)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">50+</div>
+        <div class="stat-label">Conversation Topics</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">&lt;3s</div>
+        <div class="stat-label">Response Latency</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">$1.03</div>
+        <div class="stat-label">Cost per User/Month</div>
+    </div>
+</div>
+
+<div class="callout callout-success">
+    <div class="callout-title">💡 The Problem</div>
+    <p>80% of Vietnamese students are afraid to speak English. They get only <strong>5 minutes of speaking practice per week</strong> in class. Native tutors cost 500K-1M VND/hour — unaffordable for most families.</p>
+</div>
+
+<div class="callout">
+    <div class="callout-title">🎯 Our Solution</div>
+    <p>An AI conversation partner that students can talk to <strong>24/7</strong>, get <strong>real-time grammar + pronunciation feedback</strong>, and improve at <strong>1/10th the cost</strong> of a human tutor.</p>
+</div>
+
+<h2 id="architecture">System Architecture</h2>
+
+<div class="diagram">┌─────────────────────────────────────────────────────────────────────┐
+│                         CLIENT LAYER                                 │
+│                                                                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │  Mobile App   │  │  Web App      │  │  Zalo Mini    │              │
+│  │  React Native │  │  Next.js 14   │  │  App          │              │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘              │
+│         └──────────────────┼──────────────────┘                       │
+└────────────────────────────┼──────────────────────────────────────────┘
+                             │ HTTPS / WSS
+                             ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                      NGINX REVERSE PROXY                             │
+│   ├── SSL termination  ├── Rate limiting  ├── WebSocket upgrade     │
+└────────────────────────────┬─────────────────────────────────────────┘
+                             │
+         ┌───────────────────┼───────────────────┐
+         ▼                   ▼                   ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│  BACKEND         │ │  FRONTEND        │ │  CELERY WORKERS  │
+│  FastAPI          │ │  Next.js SSR     │ │  Background      │
+│  REST + WebSocket │ │  Port 3000       │ │  tasks           │
+│  Port 8000        │ │                  │ │                  │
+└────────┬─────────┘ └─────────────────┘ └────────┬─────────┘
+         │                                         │
+         ▼                                         ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                         DATA LAYER                                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐           │
+│  │PostgreSQL │  │  Redis    │  │  Qdrant   │  │  MinIO    │           │
+│  │ Users     │  │  Cache    │  │  Vectors  │  │  Audio    │           │
+│  │ Sessions  │  │  Sessions │  │  KB       │  │  Files    │           │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘           │
+└──────────────────────────────────────────────────────────────────────┘
+                             │
+         ┌───────────────────┼───────────────────┐
+         ▼                   ▼                   ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│  OpenAI API      │ │  Deepgram        │ │  FPT.AI          │
+│  Whisper/GPT/TTS │ │  Streaming ASR   │ │  Vietnamese TTS  │
+└─────────────────┘ └─────────────────┘ └─────────────────┘</div>
+
+<h2 id="tech-stack">Tech Stack</h2>
+
+<table>
+    <tr><th>Layer</th><th>Technology</th><th>Purpose</th><th>Cost</th></tr>
+    <tr><td>Frontend Web</td><td>Next.js 14</td><td>SSR, SEO, React</td><td>Free</td></tr>
+    <tr><td>Frontend Mobile</td><td>React Native / Expo</td><td>iOS + Android</td><td>Free</td></tr>
+    <tr><td>Backend API</td><td>FastAPI (Python)</td><td>REST + WebSocket</td><td>Free</td></tr>
+    <tr><td>Database</td><td>PostgreSQL 16</td><td>Primary data store</td><td>Free</td></tr>
+    <tr><td>Cache</td><td>Redis 7</td><td>Sessions, rate limits</td><td>Free</td></tr>
+    <tr><td>Vector DB</td><td>Qdrant</td><td>Knowledge base</td><td>Free</td></tr>
+    <tr><td>ASR</td><td>OpenAI Whisper + Deepgram</td><td>Speech-to-text</td><td>$0.006/min</td></tr>
+    <tr><td>LLM</td><td>GPT-4o-mini + Claude Haiku</td><td>Conversation + Grammar</td><td>$0.15/1M tokens</td></tr>
+    <tr><td>TTS</td><td>OpenAI TTS + FPT.AI</td><td>Text-to-speech</td><td>$0.030/1K chars</td></tr>
+    <tr><td>Hosting</td><td>Railway + Vercel</td><td>Deployment</td><td>$20-100/mo</td></tr>
+    <tr><td>CDN</td><td>Cloudflare</td><td>Static assets, DDoS</td><td>Free</td></tr>
+</table>
+
+<!-- ==================== HOW IT WORKS ==================== -->
+<h2 id="user-journey">User Journey</h2>
+
+<div class="flow-step">
+    <div class="flow-number">1</div>
+    <div class="flow-content">
+        <strong>Discovery</strong> — Student sees ad on TikTok or friend recommends. Opens link → Landing page.
+    </div>
+</div>
+<div class="flow-step">
+    <div class="flow-number">2</div>
+    <div class="flow-content">
+        <strong>Authentication</strong> — Enter phone number → receive OTP via SMS → verify → JWT token issued.
+    </div>
+</div>
+<div class="flow-step">
+    <div class="flow-number">3</div>
+    <div class="flow-content">
+        <strong>Onboarding</strong> — Select age, grade, learning goal, daily practice time. System sets initial CEFR level.
+    </div>
+</div>
+<div class="flow-step">
+    <div class="flow-number">4</div>
+    <div class="flow-content">
+        <strong>First Conversation</strong> — Select topic → AI greets → Student speaks → AI responds with feedback → Repeat 8-15 turns.
+    </div>
+</div>
+<div class="flow-step">
+    <div class="flow-number">5</div>
+    <div class="flow-content">
+        <strong>Summary</strong> — Show scores (grammar, pronunciation, fluency), strengths, improvements, XP earned.
+    </div>
+</div>
+<div class="flow-step">
+    <div class="flow-number">6</div>
+    <div class="flow-content">
+        <strong>Daily Return</strong> — Push notification, streak tracking, vocabulary review, progress charts.
+    </div>
+</div>
+
+<h2 id="conversation-engine">Conversation Engine (Core)</h2>
+
+<p>This is the <strong>heart of the system</strong>. When a student speaks, here's exactly what happens:</p>
+
+<div class="diagram">Student holds mic button and speaks
+         │
+         ▼
+┌──────────────────────┐
+│  Audio Capture        │  16kHz, mono, WebM/Opus
+│  + VAD (silence       │  Auto-detect when student
+│    detection)         │  stops speaking
+└──────────┬───────────┘
+           │ WebSocket (binary)
+           ▼
+┌──────────────────────┐
+│  ASR (Speech→Text)   │  Whisper API or Deepgram
+│  "I want to eat pho  │  Latency: 500ms-2s
+│   please"            │
+└──────────┬───────────┘
+           │
+     ┌─────┼─────┐  ← PARALLEL PROCESSING
+     ▼     ▼     ▼
+┌───────┐┌───────┐┌───────┐
+│Grammar││  LLM   ││Pronun.│
+│Check  ││Agent   ││Score  │
+│       ││        ││       │
+│Score: ││"Great  ││Score: │
+│ 65    ││choice! ││ 72    │
+│       ││Would   ││       │
+│       ││you     ││       │
+│       ││like    ││       │
+│       ││beef?"  ││       │
+└───┬───┘└───┬───┘└───┬───┘
+    └────────┼────────┘
+             ▼
+┌──────────────────────┐
+│  TTS (Text→Speech)   │  OpenAI TTS API
+│  Generate audio for   │  Latency: ~800ms
+│  AI response          │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│  Send to Client       │
+│  ├── Transcript       │
+│  ├── Grammar feedback │
+│  ├── Pronunciation    │
+│  ├── AI response text │
+│  └── AI audio URL     │
+└──────────────────────┘
+
+TOTAL LATENCY: < 3 seconds (premium tier)</div>
+
+<h3>Conversation State Machine</h3>
+
+<div class="card">
+<pre><code>IDLE ──▶ TOPIC_INTRO ──▶ LISTENING ──▶ PROCESSING ──▶ RESPONDING
+                                ▲                              │
+                                │         (turn &lt; max)         │
+                                └──────────────────────────────┘
+                                                         │
+                                                    (turn >= max)
+                                                         ▼
+                                                    WRAP_UP ──▶ COMPLETED
+                                                    (summary report)</code></pre>
+</div>
+
+<h2 id="asr">Speech-to-Text (ASR) Pipeline</h2>
+
+<table>
+    <tr><th>Feature</th><th>Whisper (Free Tier)</th><th>Deepgram (Premium)</th></tr>
+    <tr><td>Mode</td><td>Batch (send complete audio)</td><td>Streaming (real-time)</td></tr>
+    <tr><td>Latency</td><td>1-2 seconds</td><td>200-500ms</td></tr>
+    <tr><td>Accuracy</td><td>92%+ WER</td><td>95%+ WER</td></tr>
+    <tr><td>Cost</td><td>$0.006/minute</td><td>$0.0043/minute</td></tr>
+    <tr><td>Best for</td><td>Free users, cost-sensitive</td><td>Premium users, best UX</td></tr>
+</table>
+
+<h3>Vietnamese Accent Handling</h3>
+<div class="card">
+    <p>Common ASR challenges for Vietnamese speakers:</p>
+    <ul>
+        <li><strong>/θ/ → /t/:</strong> "think" transcribed as "tink"</li>
+        <li><strong>/ð/ → /d/:</strong> "the" transcribed as "de"</li>
+        <li><strong>/v/ → /b/:</strong> "very" transcribed as "bery"</li>
+        <li><strong>/r/ ↔ /l/:</strong> "right" transcribed as "light"</li>
+        <li><strong>Final consonants dropped:</strong> "good" transcribed as "goo"</li>
+    </ul>
+</div>
+
+<h2 id="llm">LLM Agent System</h2>
+
+<div class="card">
+    <div class="card-title">System Prompt (Invisible to Student)</div>
+    <pre><code>You are a friendly English conversation partner for Vietnamese students.
+You are playing the role of: {ai_role} in this scenario: {scenario}.
+
+Rules:
+1. Keep responses SHORT (1-3 sentences)
+2. Use vocabulary appropriate for {cefr_level} level
+3. If student makes grammar error, correct NATURALLY
+   by using correct form in your response (don't lecture)
+4. If student seems stuck, give hint or simpler question
+5. Introduce 1-2 new vocabulary words naturally
+6. Ask follow-up questions to keep conversation flowing
+7. Be encouraging, celebrate small wins
+
+Target vocabulary: {target_vocabulary}
+Target grammar: {target_grammar}
+Current turn: {turn_number}/{max_turns}</code></pre>
+</div>
+
+<h2 id="tts">Text-to-Speech (TTS) Pipeline</h2>
+
+<table>
+    <tr><th>User Preference</th><th>OpenAI Voice</th><th>Character</th></tr>
+    <tr><td>friendly_female</td><td>nova</td><td>Warm, friendly, patient</td></tr>
+    <tr><td>friendly_male</td><td>echo</td><td>Clear, friendly, supportive</td></tr>
+    <tr><td>professional_female</td><td>shimmer</td><td>Professional, clear</td></tr>
+    <tr><td>young_energetic</td><td>alloy</td><td>Young, energetic, fun</td></tr>
+</table>
+
+<p><strong>Speed adjustment by level:</strong></p>
+<ul>
+    <li>A1-A2: <span class="inline-code">0.75x</span> (slow, clear)</li>
+    <li>B1: <span class="inline-code">0.9x</span> (slightly slower than natural)</li>
+    <li>B2+: <span class="inline-code">1.0x</span> (natural speed)</li>
+</ul>
+
+<!-- ==================== FEATURES ==================== -->
+<h2 id="grammar">Grammar Correction Engine</h2>
+
+<p>Multi-layer grammar checking pipeline:</p>
+
+<div class="flow-step">
+    <div class="flow-number">1</div>
+    <div class="flow-content">
+        <strong>Rule-Based Patterns</strong> (10ms) — Catches common Vietnamese learner errors: "I very like" → "I like ... very much"
+    </div>
+</div>
+<div class="flow-step">
+    <div class="flow-number">2</div>
+    <div class="flow-content">
+        <strong>Language Tool API</strong> (200ms) — Comprehensive grammar, spelling, punctuation checking
+    </div>
+</div>
+<div class="flow-step">
+    <div class="flow-number">3</div>
+    <div class="flow-content">
+        <strong>LLM Grammar Check</strong> (1s) — Context-aware, nuanced corrections for complex sentences
+    </div>
+</div>
+
+<h3>Common Error Categories for Vietnamese Learners</h3>
+
+<table>
+    <tr><th>Category</th><th>Example</th><th>Correction</th><th>Explanation (Vietnamese)</th></tr>
+    <tr>
+        <td><span class="tag tag-red">Tense</span></td>
+        <td>"I go yesterday"</td>
+        <td>"I went yesterday"</td>
+        <td>Dùng thì Quá khứ đơn (went) vì có "yesterday"</td>
+    </tr>
+    <tr>
+        <td><span class="tag tag-yellow">Article</span></td>
+        <td>"I want apple"</td>
+        <td>"I want an apple"</td>
+        <td>Cần mạo từ "an" trước danh từ đếm được số ít</td>
+    </tr>
+    <tr>
+        <td><span class="tag tag-blue">Word Order</span></td>
+        <td>"I very like English"</td>
+        <td>"I like English very much"</td>
+        <td>"Very" không đứng trước động từ</td>
+    </tr>
+    <tr>
+        <td><span class="tag tag-purple">Subject-Verb</span></td>
+        <td>"He don't like it"</td>
+        <td>"He doesn't like it"</td>
+        <td>He/She/It đi với "doesn't"</td>
+    </tr>
+    <tr>
+        <td><span class="tag tag-green">Vocabulary</span></td>
+        <td>"I want to eat pho please"</td>
+        <td>"I'd like to have pho, please"</td>
+        <td>Dùng "I'd like" cho lịch sự hơn</td>
+    </tr>
+</table>
+
+<h2 id="pronunciation">Pronunciation Scoring</h2>
+
+<p>4 dimensions scored:</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">40%</div>
+        <div class="stat-label">Accuracy — Phoneme correctness</div>
+        <div class="progress-bar"><div class="progress-fill progress-green" style="width:40%"></div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">25%</div>
+        <div class="stat-label">Fluency — Speech rate, pauses</div>
+        <div class="progress-bar"><div class="progress-fill progress-blue" style="width:25%"></div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">20%</div>
+        <div class="stat-label">Completeness — All words spoken</div>
+        <div class="progress-bar"><div class="progress-fill progress-yellow" style="width:20%"></div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">15%</div>
+        <div class="stat-label">Prosody — Stress, rhythm, intonation</div>
+        <div class="progress-bar"><div class="progress-fill progress-green" style="width:15%"></div></div>
+    </div>
+</div>
+
+<h3>Common Pronunciation Errors (Vietnamese Speakers)</h3>
+
+<table>
+    <tr><th>Sound</th><th>Common Mistake</th><th>Example</th><th>Tip (Vietnamese)</th></tr>
+    <tr><td>/θ/ (th)</td><td>/t/ or /s/</td><td>"think" → "tink"</td><td>Đặt lưỡi giữa răng, thổi hơi ra</td></tr>
+    <tr><td>/ð/ (th voiced)</td><td>/d/ or /z/</td><td>"the" → "de"</td><td>Giống /θ/ nhưng rung dây thanh</td></tr>
+    <tr><td>/r/ vs /l/</td><td>Confused</td><td>"right" → "light"</td><td>/r/: Cuộn lưỡi. /l/: Lưỡi chạm vòm</td></tr>
+    <tr><td>/v/</td><td>/b/</td><td>"very" → "bery"</td><td>Răng trên cắn nhẹ môi dưới</td></tr>
+    <tr><td>Final consonants</td><td>Dropped</td><td>"good" → "goo"</td><td>Phát âm rõ phụ âm cuối</td></tr>
+</table>
+
+<h2 id="topics">Topic System (50+ Topics)</h2>
+
+<table>
+    <tr><th>Level</th><th>Topics</th><th>Curriculum</th></tr>
+    <tr><td><span class="tag tag-green">A1-A2</span></td><td>Greetings, Family, Hobbies, Food, Weather, Shopping, Directions</td><td>Grade 6-9</td></tr>
+    <tr><td><span class="tag tag-blue">B1</span></td><td>School, Health, Travel, Job Interview, Experiences</td><td>Grade 10-12</td></tr>
+    <tr><td><span class="tag tag-purple">B2</span></td><td>IELTS Part 1/2/3, Business, Presentations, Debates</td><td>IELTS Prep</td></tr>
+    <tr><td><span class="tag tag-yellow">Culture</span></td><td>Tet, Vietnamese Food, Festivals, Tourism, History</td><td>All levels</td></tr>
+</table>
+
+<h2 id="vocabulary">Vocabulary Builder (Spaced Repetition)</h2>
+
+<div class="card">
+    <div class="card-title">SM-2 Algorithm — Review Schedule</div>
+    <table>
+        <tr><th>Rating</th><th>Meaning</th><th>Next Review</th></tr>
+        <tr><td>1 — Again</td><td>Forgot completely</td><td>1 minute (same session)</td></tr>
+        <tr><td>2 — Hard</td><td>Remembered with difficulty</td><td>1 day</td></tr>
+        <tr><td>3 — Good</td><td>Remembered with effort</td><td>3 days</td></tr>
+        <tr><td>4 — Easy</td><td>Remembered easily</td><td>7 days</td></tr>
+        <tr><td>5 — Perfect</td><td>Instant recall</td><td>14 days</td></tr>
+    </table>
+</div>
+
+<h2 id="parent">Parent Dashboard</h2>
+
+<div class="card">
+    <div class="card-title">Weekly Report Sent via Zalo</div>
+    <ul>
+        <li>📊 Practice time this week (vs last week)</li>
+        <li>💬 Conversations completed</li>
+        <li>📚 New words learned</li>
+        <li>📈 Score trend (grammar, pronunciation, fluency)</li>
+        <li>✅ Strengths</li>
+        <li>⚠️ Areas to improve</li>
+        <li>🔗 Link to full dashboard</li>
+    </ul>
+</div>
+
+<h2 id="gamification">Gamification System</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">🌱→🚀</div>
+        <div class="stat-label">10 Levels (Seed → Universe)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Achievements to Unlock</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">🔥</div>
+        <div class="stat-label">Daily Streak Tracking</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">+50 XP</div>
+        <div class="stat-label">Per Conversation</div>
+    </div>
+</div>
+
+<!-- ==================== TECHNICAL ==================== -->
+<h2 id="database">Database Schema</h2>
+
+<div class="card">
+    <div class="card-title">5 Core Tables</div>
+    <pre><code>users                    → User profiles, preferences, stats
+conversation_sessions    → Each practice session
+conversation_turns       → Each turn (student + AI)
+vocabulary_items         → Words with SM-2 spaced repetition
+achievements             → Unlocked achievements</code></pre>
+</div>
+
+<h2 id="websocket">WebSocket Protocol</h2>
+
+<div class="card">
+    <div class="card-title">Client → Server Messages</div>
+    <pre><code>{ "type": "audio_start", "config": { "sample_rate": 16000 } }
+&lt;binary audio chunks&gt;
+{ "type": "audio_end" }
+{ "type": "text_message", "text": "I want to order pho" }
+{ "type": "session_end" }</code></pre>
+</div>
+
+<div class="card">
+    <div class="card-title">Server → Client Messages</div>
+    <pre><code>{ "type": "transcript_partial", "text": "I want to eat..." }
+{ "type": "transcript_final", "text": "I want to eat pho please" }
+{ "type": "feedback", "grammar": {...}, "pronunciation": {...} }
+{ "type": "ai_response", "text": "...", "audio_url": "..." }
+{ "type": "session_summary", "overall_score": 74, ... }</code></pre>
+</div>
+
+<h2 id="api">API Endpoints</h2>
+
+<table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-green">POST</span></td><td>/api/v1/auth/phone/send-otp</td><td>Send OTP to phone</td></tr>
+    <tr><td><span class="tag tag-green">POST</span></td><td>/api/v1/auth/phone/verify</td><td>Verify OTP → JWT</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td>/api/v1/users/me</td><td>Get user profile</td></tr>
+    <tr><td><span class="tag tag-green">POST</span></td><td>/api/v1/conversations/start</td><td>Start conversation</td></tr>
+    <tr><td><span class="tag tag-purple">WS</span></td><td>/ws/v1/conversations/{id}</td><td>Real-time voice chat</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td>/api/v1/topics</td><td>List topics</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td>/api/v1/vocabulary/due</td><td>Words due for review</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td>/api/v1/analytics/progress</td><td>Progress over time</td></tr>
+</table>
+
+<h2 id="caching">Caching Architecture</h2>
+
+<table>
+    <tr><th>Layer</th><th>Technology</th><th>What's Cached</th><th>TTL</th></tr>
+    <tr><td>CDN</td><td>Cloudflare</td><td>Static assets, TTS audio</td><td>1 year / 1 hour</td></tr>
+    <tr><td>App Cache</td><td>Redis</td><td>Sessions, grammar results, topics</td><td>5min-24h</td></tr>
+    <tr><td>DB Cache</td><td>PostgreSQL</td><td>Connection pool, prepared statements</td><td>Permanent</td></tr>
+    <tr><td>Client</td><td>LocalStorage/IndexedDB</td><td>Preferences, vocab cache</td><td>Session/30 days</td></tr>
+</table>
+
+<h2 id="security">Security</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">🔒</div>
+        <div class="stat-label">TLS 1.3 + SSL</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">🛡️</div>
+        <div class="stat-label">JWT Auth (24h expiry)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">⏱️</div>
+        <div class="stat-label">Rate Limiting (30 req/s)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">🔐</div>
+        <div class="stat-label">AES-256 Encryption</div>
+    </div>
+</div>
+
+<h2 id="errors">Error Handling</h2>
+
+<table>
+    <tr><th>Error</th><th>Handling</th><th>User Message (Vietnamese)</th></tr>
+    <tr><td>ASR timeout</td><td>Retry once, text fallback</td><td>"Không nghe rõ, nói lại hoặc gõ text nhé"</td></tr>
+    <tr><td>LLM timeout</td><td>Retry with simpler prompt</td><td>"AI đang suy nghĩ, chờ một chút..."</td></tr>
+    <tr><td>TTS error</td><td>Show text only</td><td>(Silent, show text)</td></tr>
+    <tr><td>Network disconnect</td><td>Auto-reconnect (3 attempts)</td><td>"Đang kết nối lại..."</td></tr>
+    <tr><td>No mic permission</td><td>Prompt to enable</td><td>"Cho phép microphone để luyện nói nhé"</td></tr>
+</table>
+
+<!-- ==================== BUSINESS ==================== -->
+<h2 id="personas">User Personas</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">👨‍🎓</div>
+        <div class="stat-label">Minh (15, Student)</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px">Shy, wants to speak confidently. Uses phone 4-5h/day. Best time: 8-9 PM.</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">👩‍👧</div>
+        <div class="stat-label">Chị Lan (42, Parent)</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px">Worried about grades. Can't afford tutor. Wants weekly reports via Zalo.</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">👨‍🏫</div>
+        <div class="stat-label">Thầy Hùng (35, Teacher)</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px">200+ students, can't practice with each. Wants homework assignment feature.</p>
+    </div>
+</div>
+
+<h2 id="pricing">Pricing</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">Free</div>
+        <div class="stat-label">3 conversations/day<br>5 topics<br>Basic feedback</div>
+    </div>
+    <div class="stat-card" style="border-color: var(--accent);">
+        <div class="stat-value">99K/mo</div>
+        <div class="stat-label">Unlimited conversations<br>50+ topics<br>Full feedback<br>Parent dashboard</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">199K/mo</div>
+        <div class="stat-label">Everything in Premium<br>+ AI Video Avatar<br>+ IELTS Mock Tests<br>+ Homework Help</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">50K/student/yr</div>
+        <div class="stat-label">School License<br>Teacher dashboard<br>Class management<br>Curriculum alignment</div>
+    </div>
+</div>
+
+<h2 id="cost">Cost Analysis</h2>
+
+<table>
+    <tr><th>Component</th><th>Usage/User/Month</th><th>Unit Cost</th><th>Cost/User</th></tr>
+    <tr><td>Whisper ASR</td><td>120 min</td><td>$0.006/min</td><td>$0.72</td></tr>
+    <tr><td>GPT-4o-mini</td><td>50K tokens</td><td>$0.15/1M</td><td>$0.008</td></tr>
+    <tr><td>OpenAI TTS</td><td>10K chars</td><td>$0.030/1K</td><td>$0.30</td></tr>
+    <tr><td><strong>Total API</strong></td><td></td><td></td><td><strong>$1.03</strong></td></tr>
+    <tr><td>Infrastructure</td><td></td><td></td><td>$0.20</td></tr>
+    <tr><td style="font-weight:700">Total Cost/User</td><td></td><td></td><td style="font-weight:700;color:var(--green)">$1.23</td></tr>
+</table>
+
+<div class="callout callout-success">
+    <div class="callout-title">💰 Unit Economics</div>
+    <p><strong>ARPU:</strong> $4.00/month (Premium) &nbsp;|&nbsp; <strong>Cost:</strong> $1.23/month &nbsp;|&nbsp; <strong>Gross Margin:</strong> 69% &nbsp;|&nbsp; <strong>LTV/CAC:</strong> 9.6x</p>
+</div>
+
+<h2 id="roadmap">Roadmap</h2>
+
+<table>
+    <tr><th>Phase</th><th>Timeline</th><th>Focus</th><th>Status</th></tr>
+    <tr>
+        <td><span class="tag tag-green">Phase 1 — MVP</span></td>
+        <td>Weeks 1-6</td>
+        <td>Conversation engine, grammar, pronunciation, web app</td>
+        <td><span class="tag tag-yellow">In Progress</span></td>
+    </tr>
+    <tr>
+        <td><span class="tag tag-blue">Phase 2 — Growth</span></td>
+        <td>Weeks 7-12</td>
+        <td>Mobile app, payment, parent dashboard, vocabulary</td>
+        <td><span class="tag tag-red">Planned</span></td>
+    </tr>
+    <tr>
+        <td><span class="tag tag-purple">Phase 3 — Scale</span></td>
+        <td>Weeks 13-24</td>
+        <td>AI Avatar, IELTS prep, school license, Zalo Mini App</td>
+        <td><span class="tag tag-red">Planned</span></td>
+    </tr>
+</table>
+
+<div style="margin-top:60px;padding:24px;text-align:center;color:var(--text-muted);border-top:1px solid var(--border)">
+    <p>AI English Coach — AI20K-033</p>
+    <p style="font-size:12px">Built with FastAPI + Next.js + PostgreSQL + Redis + Qdrant</p>
+    <p style="font-size:12px"><a href="https://github.com/tmctuyen201/ai-english-coach" style="color:var(--accent-light)">GitHub</a></p>
+</div>
+
+</div>
+
+<script>
+// Smooth scroll for sidebar links
+document.querySelectorAll('.sidebar a').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            this.classList.add('active');
+        }
+    });
+});
+
+// Highlight active section on scroll
+const sections = document.querySelectorAll('h2[id]');
+window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (scrollY >= sectionTop - 100) {
+            current = section.getAttribute('id');
+        }
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => {
+        a.classList.remove('active');
+        if (a.getAttribute('href') === '#' + current) {
+            a.classList.add('active');
+        }
+    });
+});
+</script>
+
+</body>
+</html>
